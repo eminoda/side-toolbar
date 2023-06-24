@@ -1,5 +1,5 @@
-const path = require('path')
-const { app, BrowserWindow } = require("electron");
+const path = require("path");
+const { app, BrowserWindow, screen, ipcMain } = require("electron");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -24,4 +24,29 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.commandLine.appendSwitch("charset", "utf-8");
+
+ipcMain.handle("main-listen", async (event, args) => {
+  const { channel, ..._args } = args;
+  console.log(channel, _args);
+  switch (channel) {
+    case "win:open":
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+      const win = new BrowserWindow({
+        width: screenWidth,
+        height: screenHeight,
+        webPreferences: {
+          preload: path.join(__dirname, "preload.js"),
+        },
+      });
+      win.loadURL("http://localhost:5173/win");
+      break;
+    default:
+      console.log("为实现");
+      break;
+  }
+  return args;
 });
