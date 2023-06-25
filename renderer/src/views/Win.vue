@@ -33,16 +33,14 @@ const handleIframeLoad = (index: number) => {
   activeKey.value = index + "";
   if (winRef.value) {
     const currentRef = winRef.value[index];
-    setTimeout(() => {
-      console.log(currentRef.contentWindow);
-    }, 1000);
+    wins[index].title = currentRef.contentDocument.querySelector("title").textContent;
   }
 };
 electronAPI.onIpcRenderer(({ url }) => {
   wins.forEach((element) => {
     element.show = false;
   });
-  wins.push({ url, show: true, title: Date.now() + "" });
+  wins.push({ url, show: true, title: "" });
 });
 </script>
 

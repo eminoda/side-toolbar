@@ -50,7 +50,7 @@ app.on("web-contents-created", (event, webContents) => {
 });
 
 app.commandLine.appendSwitch("charset", "utf-8");
-// app.commandLine.appendSwitch('disable-site-isolation-trials')
+app.commandLine.appendSwitch('disable-site-isolation-trials')
 ipcMain.handle("main-listen", async (event, args) => {
   const { channel, ..._args } = args;
   console.log(channel, _args);
