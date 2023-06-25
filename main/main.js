@@ -1,5 +1,5 @@
 const path = require("path");
-const { app, BrowserWindow, screen, ipcMain } = require("electron");
+const { app, BrowserWindow, screen, ipcMain, webFrameMain } = require("electron");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -26,6 +26,9 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 app.on("web-contents-created", (event, webContents) => {
+  console.log(webContents.getTitle());
+});
+app.on("web-contents-created", (event, webContents) => {
   // webContents.setWindowOpenHandler(({ url, frameName, disposition }) => {
   //   console.log(url, frameName, disposition);
   //   if (url.indexOf("127.0.0.1") !== -1) {
@@ -47,7 +50,7 @@ app.on("web-contents-created", (event, webContents) => {
 });
 
 app.commandLine.appendSwitch("charset", "utf-8");
-
+// app.commandLine.appendSwitch('disable-site-isolation-trials')
 ipcMain.handle("main-listen", async (event, args) => {
   const { channel, ..._args } = args;
   console.log(channel, _args);
@@ -60,6 +63,11 @@ ipcMain.handle("main-listen", async (event, args) => {
         height: screenHeight * 0.7,
         webPreferences: {
           preload: path.join(__dirname, "preload.js"),
+          // nodeIntegration: true,
+          // contextIsolation: false,
+          webSecurity: false,
+          allowRunningInsecureContent: true,
+          webviewTag: true,
         },
       });
       win.loadURL("http://localhost:5173/win");
@@ -69,32 +77,28 @@ ipcMain.handle("main-listen", async (event, args) => {
         }
         callback({ responseHeaders: { ...details.responseHeaders } });
       });
+      win.webContents.on("page-title-updated", (event, title, explicitSet) => {
+        // win.webContents.send("renderer-listen", { channel: "title-change", title, explicitSet });
+        console.log("------------------", title);
+      });
       // 覆写 a 标签 href 打开新窗口
-      win.webContents.setWindowOpenHandler(({ url, frameName, disposition }) => {
-        console.log(url, frameName, disposition);
-        if (url.indexOf("127.0.0.1") !== -1) {
-          return {
-            action: "allow",
-            overrideBrowserWindowOptions: {
-              frame: false,
-              fullscreenable: false,
-              backgroundColor: "black",
-              webPreferences: {
-                // preload: "my-child-window-preload-script.js",
-              },
-            },
-          };
-        } else {
-          // 通知渲染进程
-          win.webContents.send("renderer-listen", { channel: "url-change", url });
-          return { action: "deny" };
-        }
+      win.webContents.setWindowOpenHandler(({ url, frameName, features, disposition, referrer, postBody }) => {
+        console.log({ url, frameName, features, disposition, referrer, postBody });
+        // 通知渲染进程
+        const title = win.webContents.getTitle();
+        win.webContents.send("renderer-listen", { channel: "url-change", url });
+        return { action: "deny" };
+      });
+      win.webContents.on("did-start-navigation", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
+        console.log("did-start-navigation-----2");
+      });
+      win.webContents.on("will-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
+        console.log("will-frame-navigate-----3");
+      });
+      win.webContents.on("did-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
+        console.log("did-frame-navigate-----1");
       });
 
-      // win.webContents.on("did-create-window", (window, details) => {
-      //   console.log("did-create-window", details.url);
-      //   console.log(window.webContents, window.webContents.title);
-      // });
       break;
     default:
       console.log("为实现");
