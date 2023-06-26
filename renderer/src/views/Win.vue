@@ -1,39 +1,40 @@
 <template>
   <div>
-    <div>
-      <a-input v-model="url" placeholder="Basic usage" @keydown.enter="handleSearch" />
-    </div>
+    <div>{{ url }}</div>
     <a-tabs v-model:activeKey="activeKey" type="card">
-      <a-tab-pane :key="index + ''" :tab="item.title" v-for="(item, index) in wins">
-        <div>{{ index }}</div>
+      <a-tab-pane :key="item.url" :tab="item.title" v-for="(item, index) in wins">
+        <iframe :src="item.url" frameBorder="0" @load="handleIframeLoad(index)" ref="winRef" class="win"></iframe>
       </a-tab-pane>
     </a-tabs>
     <div v-for="(item, index) in wins">
-      <!-- <webview :src="item.url" class="win"></webview> -->
-      <iframe :src="item.url" frameBorder="0" @load="handleIframeLoad(index)" ref="winRef" v-show="item.show" class="win"></iframe>
+      <!-- <iframe :src="item.url" frameBorder="0" @load="handleIframeLoad(index)" ref="winRef" v-show="item.show" class="win"></iframe> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useRoute } from "vue-router";
 import { ref, reactive } from "vue";
-const winRef = ref<HTMLInputElement[]>([]);
-const url = ref("");
-const activeKey = ref("0");
-const wins = reactive([
-  {
-    url: "http://baidu.com",
+
+const route = useRoute();
+const url = decodeURIComponent(<string>route.query.url);
+const winRef = ref<HTMLIFrameElement[]>([]);
+const activeKey = ref("");
+const wins = reactive(<WindowIframe[]>[]);
+if (url) {
+  wins.push({
+    url,
     show: true,
-    title: "首页",
-  },
-]);
-const handleSearch = () => {};
+  });
+  activeKey.value = wins[0].url;
+}
 const handleIframeLoad = (index: number) => {
-  console.log(index);
-  activeKey.value = index + "";
+  console.log("iframe loaded", winRef.value);
+  // activeKey.value = index + "";
   if (winRef.value) {
     const currentRef = winRef.value[index];
-    wins[index].title = currentRef.contentDocument.querySelector("title").textContent;
+    console.log(currentRef.contentDocument);
+    wins[index].title = currentRef.contentDocument!.querySelector("title")!.textContent || "";
   }
 };
 electronAPI.onIpcRenderer(({ url }) => {
@@ -41,6 +42,7 @@ electronAPI.onIpcRenderer(({ url }) => {
     element.show = false;
   });
   wins.push({ url, show: true, title: "" });
+  activeKey.value = url;
 });
 </script>
 
@@ -49,6 +51,5 @@ electronAPI.onIpcRenderer(({ url }) => {
   position: absolute;
   width: 100%;
   height: 100%;
-  top: 200px;
 }
 </style>

@@ -1,107 +1,88 @@
 <template>
-  <!-- 侧边栏 -->
-  <div class="side-toolbar">
-    <up-outlined class="go-icon up" />
-    <div class="inner">
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>新开窗口</template>
-          <div class="img-wrap">
-            <windows-outlined @click="openBrowser" />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>开发</template>
-          <div class="img-wrap">
-            <!-- <tool-outlined /> -->
-            <code-outlined />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>实用功能</template>
-          <div class="img-wrap">
-            <experiment-outlined />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>设置</template>
-          <div class="img-wrap">
-            <setting-outlined />
-          </div>
-        </a-tooltip>
-      </div>
+  <div class="page">
+    <a-input-search class="search-input" v-model:value="keyword" placeholder="请输入查询的内容" enter-button @search="onSearch" />
+    <div class="search-type">
+      <a-badge v-for="(item, index) in searchEngines" :key="index">
+        <template #count v-if="item.show">
+          <check-circle-outlined :style="{ color: 'rgb(82, 196, 26)' }" />
+        </template>
+        <a-avatar :size="40" style="background-color: #fff" @click="chooseEngine(item)">
+          <template #icon>
+            <img :src="item.image" alt="" />
+          </template>
+        </a-avatar>
+      </a-badge>
     </div>
-    <down-outlined class="go-icon down" />
+    <iframe src="https://www.bilibili.com/video/BV17z4y1v7tY/?spm_id_from=333.1007.tianma.1-1-1.click&vd_source=75af4fa4191b57c31017b8df385135a1" frameborder="0"></iframe>
   </div>
 </template>
 
 <script setup lang="ts">
-import { UpOutlined, DownOutlined, SettingOutlined, CodeOutlined, ExperimentOutlined, WindowsOutlined } from "@ant-design/icons-vue";
-
-const openBrowser = () => {
-  // window.open("http://www.baidu.com");
-  electronAPI.toIpcMain("win:open", { title: "新标签页" });
+import { useRouter } from "vue-router";
+import queryString from "query-string";
+import { CheckCircleOutlined } from "@ant-design/icons-vue";
+import { ref, reactive } from "vue";
+const iconModules = import.meta.glob<string>("@/assets/images/home/icon/*.png", { import: "default", eager: true });
+const keyword = ref("");
+// const searchEngines: SearchEngine[] = ref([{ url: "https://cn.bing.com/search", image: "", field: "" }]);
+const searchEngines = reactive(
+  <SearchEngine[]>[
+    {
+      url: "https://cn.bing.com/search",
+      field: "q",
+      name: "bing",
+      show: true,
+    },
+    {
+      url: "https://baidu.com/s",
+      field: "wd",
+      name: "baidu",
+    },
+  ].map(({ url, field, name, show }) => {
+    const image = iconModules[<string>Object.keys(iconModules).find((path) => path.indexOf(name) !== -1)!];
+    return { url, field, image, show, name };
+  })
+);
+const onSearch = () => {
+  if (keyword.value) {
+    const { url, field } = searchEngines.find((item) => item.show)!;
+    const searchStr = queryString.stringify({ [field]: keyword.value });
+    window.open(`${url}?${searchStr}`);
+  }
 };
+const chooseEngine = (engine: SearchEngine) => {
+  searchEngines.forEach((item) => {
+    item.show = item.name == engine.name;
+  });
+  onSearch();
+};
+const router = useRouter();
+electronAPI.onIpcRenderer(({ url }) => {
+  router.push({ path: "/win", query: { url: encodeURIComponent(url) } });
+});
 </script>
 
 <style scoped lang="less">
-.side-toolbar {
-  width: 88px;
-  height: 400px;
-  background-color: rgba(145, 202, 255, 0.4);
-  border-radius: 8px;
-  padding: 24px 12px;
-  position: relative;
-  .go-icon {
-    position: absolute;
-    left: 50%;
-    transform: scaleX(2);
-    font-size: 14px;
-    margin-left: -7px;
-    color: #8c8c8c;
-    cursor: pointer;
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  .search-input {
+    display: block;
+    width: 40%;
   }
-  .up {
-    top: 3px;
-  }
-  .down {
-    bottom: 3px;
-  }
-  .inner {
+  .search-type {
+    margin-top: 3%;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    .side-toolbar-icon {
-      display: inline-block;
-      width: 60px;
-      height: 60px;
-      box-shadow: 0px 0px 6px 3px rgba(255, 255, 255, 0.8);
-      background-color: #fff;
-      border-radius: 8px;
+    justify-content: center;
+    :deep(.ant-badge) {
+      border-radius: 50%;
+      margin-right: 30px;
       cursor: pointer;
-      user-select: none;
-      margin-bottom: 12px;
-      &:last-child {
-        margin-bottom: 0;
-      }
-      .img-wrap {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        :deep([role="img"]) {
-          font-size: 40px;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-        }
-      }
+    }
+    :deep(.ant-avatar) {
     }
   }
 }

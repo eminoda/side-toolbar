@@ -1,10 +1,12 @@
 import * as VueRouter from 'vue-router'
+import SiderBar from '@/views/SiderBar.vue'
 import Home from '@/views/Home.vue'
 import Win from '@/views/Win.vue'
 const routes = [
-    { path: '/', redirect: '/home' },
-    { path: '/home', component: Home },
+    { path: '/', redirect: '/siderBar' },
+    { path: '/siderBar', component: SiderBar },
     { path: '/win', component: Win },
+    { path: '/Home', component: Home },
 ]
 
 const router = VueRouter.createRouter({

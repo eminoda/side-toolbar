@@ -50,7 +50,7 @@ app.on("web-contents-created", (event, webContents) => {
 });
 
 app.commandLine.appendSwitch("charset", "utf-8");
-app.commandLine.appendSwitch('disable-site-isolation-trials')
+app.commandLine.appendSwitch("disable-site-isolation-trials");
 ipcMain.handle("main-listen", async (event, args) => {
   const { channel, ..._args } = args;
   console.log(channel, _args);
@@ -66,11 +66,11 @@ ipcMain.handle("main-listen", async (event, args) => {
           // nodeIntegration: true,
           // contextIsolation: false,
           webSecurity: false,
-          allowRunningInsecureContent: true,
+          // allowRunningInsecureContent: true,
           webviewTag: true,
         },
       });
-      win.loadURL("http://localhost:5173/win");
+      win.loadURL("http://localhost:5173/home");
       win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
         if (details.responseHeaders["Content-Security-Policy"]) {
           delete details.responseHeaders["Content-Security-Policy"];
@@ -83,20 +83,27 @@ ipcMain.handle("main-listen", async (event, args) => {
       });
       // 覆写 a 标签 href 打开新窗口
       win.webContents.setWindowOpenHandler(({ url, frameName, features, disposition, referrer, postBody }) => {
-        console.log({ url, frameName, features, disposition, referrer, postBody });
+        // console.log({ url, frameName, features, disposition, referrer, postBody });
+        console.log("setWindowOpenHandler---", url, disposition);
         // 通知渲染进程
         const title = win.webContents.getTitle();
         win.webContents.send("renderer-listen", { channel: "url-change", url });
         return { action: "deny" };
       });
-      win.webContents.on("did-start-navigation", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
-        console.log("did-start-navigation-----2");
-      });
-      win.webContents.on("will-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
-        console.log("will-frame-navigate-----3");
-      });
+      // win.webContents.on("did-start-navigation", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
+      //   console.log("did-start-navigation-----2");
+      // });
+      // win.webContents.on("will-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
+      //   console.log("will-frame-navigate-----3");
+      // });
       win.webContents.on("did-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
         console.log("did-frame-navigate-----1");
+        const frame = webFrameMain.fromId(frameProcessId, frameRoutingId);
+        if (frame) {
+          console.log(url);
+          // const code = 'document.body.innerHTML = document.body.innerHTML.replaceAll("heck", "h*ck")';
+          // frame.executeJavaScript(code);
+        }
       });
 
       break;
