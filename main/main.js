@@ -12,6 +12,7 @@ const createWindow = () => {
 
   //   win.loadFile("index.html");
   win.loadURL("http://localhost:5173/");
+  win.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
@@ -101,8 +102,17 @@ ipcMain.handle("main-listen", async (event, args) => {
         const frame = webFrameMain.fromId(frameProcessId, frameRoutingId);
         if (frame) {
           console.log(url);
-          // const code = 'document.body.innerHTML = document.body.innerHTML.replaceAll("heck", "h*ck")';
-          // frame.executeJavaScript(code);
+          const code = `
+          const open = window.open;
+          window.open = (strUrl, strWindowName, strWindowFeatures) => {
+            if(strWindowName==='_top'){
+              console.log('不允许重写顶级窗口')
+              return;
+            }
+            debugger
+  open(strUrl, strWindowName == "_top" ? "_blank" : strWindowName, strWindowFeatures);
+};`;
+          frame.executeJavaScript(code);
         }
       });
 

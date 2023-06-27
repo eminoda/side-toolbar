@@ -24,6 +24,7 @@ import { CheckCircleOutlined } from "@ant-design/icons-vue";
 import { ref, reactive } from "vue";
 const iconModules = import.meta.glob<string>("@/assets/images/home/icon/*.png", { import: "default", eager: true });
 const keyword = ref("");
+const router = useRouter();
 // const searchEngines: SearchEngine[] = ref([{ url: "https://cn.bing.com/search", image: "", field: "" }]);
 const searchEngines = reactive(
   <SearchEngine[]>[
@@ -56,7 +57,7 @@ const chooseEngine = (engine: SearchEngine) => {
   });
   onSearch();
 };
-const router = useRouter();
+// 将拦截 window.open，将跳转链接回调到这里
 electronAPI.onIpcRenderer(({ url }) => {
   router.push({ path: "/win", query: { url: encodeURIComponent(url) } });
 });
@@ -69,6 +70,9 @@ electronAPI.onIpcRenderer(({ url }) => {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background: no-repeat center url("@/assets/images/home/search-bg.png");
+  background-size: cover;
+  box-shadow: inset 0 0 10px 4px #999;
   .search-input {
     display: block;
     width: 40%;
@@ -78,11 +82,14 @@ electronAPI.onIpcRenderer(({ url }) => {
     display: flex;
     justify-content: center;
     :deep(.ant-badge) {
+      box-shadow: 0 0 5px 0 #999;
+      background-color: #fff;
       border-radius: 50%;
       margin-right: 30px;
       cursor: pointer;
     }
     :deep(.ant-avatar) {
+      padding: 2px;
     }
   }
 }

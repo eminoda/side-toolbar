@@ -15,3 +15,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
 window.addEventListener("DOMContentLoaded", () => {
   console.log("页面 dom 加载完毕");
 });
+
+const open = window.open;
+window.open = (strUrl, strWindowName, strWindowFeatures) => {
+  alert(strWindowName == "_top" ? "_blank" : strWindowName);
+  console.log("复写window.open");
+  open(strUrl, strWindowName == "_top" ? "_blank" : strWindowName, strWindowFeatures);
+};
