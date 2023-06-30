@@ -73,19 +73,19 @@ ipcMain.handle("main-listen", async (event, args) => {
       });
       win.loadURL("http://localhost:5173/home");
       win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        // console.log(details)
+        if (details.responseHeaders["x-frame-options"]) {
+          delete details.responseHeaders["x-frame-options"];
+        }
         if (details.responseHeaders["Content-Security-Policy"]) {
           delete details.responseHeaders["Content-Security-Policy"];
         }
         callback({ responseHeaders: { ...details.responseHeaders } });
       });
-      win.webContents.on("page-title-updated", (event, title, explicitSet) => {
-        // win.webContents.send("renderer-listen", { channel: "title-change", title, explicitSet });
-        console.log("------------------", title);
-      });
       // 覆写 a 标签 href 打开新窗口
       win.webContents.setWindowOpenHandler(({ url, frameName, features, disposition, referrer, postBody }) => {
         // console.log({ url, frameName, features, disposition, referrer, postBody });
-        console.log("setWindowOpenHandler---", url, disposition);
+        console.log("win--setWindowOpenHandler", url, disposition);
         // 通知渲染进程
         const title = win.webContents.getTitle();
         win.webContents.send("renderer-listen", { channel: "url-change", url });
@@ -98,10 +98,9 @@ ipcMain.handle("main-listen", async (event, args) => {
       //   console.log("will-frame-navigate-----3");
       // });
       win.webContents.on("did-frame-navigate", (event, url, httpResponseCode, httpStatusText, isMainFrame, frameProcessId, frameRoutingId) => {
-        console.log("did-frame-navigate-----1");
         const frame = webFrameMain.fromId(frameProcessId, frameRoutingId);
         if (frame) {
-          console.log(url);
+          console.log("win--did-frame-navigate", url);
           const code = `
           const open = window.open;
           window.open = (strUrl, strWindowName, strWindowFeatures) => {
@@ -109,7 +108,6 @@ ipcMain.handle("main-listen", async (event, args) => {
               console.log('不允许重写顶级窗口')
               return;
             }
-            debugger
   open(strUrl, strWindowName == "_top" ? "_blank" : strWindowName, strWindowFeatures);
 };`;
           frame.executeJavaScript(code);

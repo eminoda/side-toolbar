@@ -1,14 +1,11 @@
 <template>
   <div class="win">
     <div>{{ url }}</div>
-    <a-tabs v-model:activeKey="activeKey" type="card">
-      <a-tab-pane class="container" :key="item.url" :tab="item.title" v-for="(item, index) in wins">
+    <a-tabs v-model:activeKey="activeKey" type="editable-card" hide-add @edit="onEdit">
+      <a-tab-pane class="container" :key="index" :tab="item.title" v-for="(item, index) in wins" :closable="item.show">
         <iframe :src="item.url" scrolling="auto" frameBorder="0" @load="handleIframeLoad(index)" ref="winRef" class="inner-win"></iframe>
       </a-tab-pane>
     </a-tabs>
-    <div v-for="(item, index) in wins">
-      <!-- <iframe :src="item.url" frameBorder="0" @load="handleIframeLoad(index)" ref="winRef" v-show="item.show" class="win"></iframe> -->
-    </div>
   </div>
 </template>
 
@@ -19,15 +16,20 @@ import { ref, reactive } from "vue";
 const route = useRoute();
 const url = decodeURIComponent(<string>route.query.url);
 const winRef = ref<HTMLIFrameElement[]>([]);
-const activeKey = ref("");
+const activeKey = ref(0);
 const wins = reactive(<WindowIframe[]>[]);
 if (url) {
   wins.push({
     url,
     show: true,
   });
-  activeKey.value = wins[0].url;
+  activeKey.value = 0;
 }
+const onEdit = (targetKey: string) => {
+  wins.splice(Number(targetKey), 1);
+  wins[wins.length - 1].show = true;
+  activeKey.value = Number(targetKey) - 1;
+};
 const handleIframeLoad = (index: number) => {
   console.log("iframe loaded", winRef.value);
   // activeKey.value = index + "";
@@ -66,7 +68,7 @@ electronAPI.onIpcRenderer(({ url }) => {
     element.show = false;
   });
   wins.push({ url, show: true, title: "" });
-  activeKey.value = url;
+  activeKey.value = wins.length - 1;
 });
 </script>
 

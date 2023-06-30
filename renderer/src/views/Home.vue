@@ -1,11 +1,15 @@
 <template>
   <div class="page">
-    <a-input-search class="search-input" v-model:value="keyword" placeholder="请输入查询的内容" enter-button @search="onSearch" />
+    <a-input class="search-input" v-model:value="keyword" placeholder="请输入查询的内容">
+      <template #suffix>
+        <search-outlined @click="onSearch" />
+      </template>
+    </a-input>
     <div class="search-type">
-      <a-badge v-for="(item, index) in searchEngines" :key="index">
-        <template #count v-if="item.show">
+      <a-badge v-for="(item, index) in searchEngines" :key="index" :class="{ acitve: item.show }">
+        <!-- <template #count v-if="item.show">
           <check-circle-outlined :style="{ color: 'rgb(82, 196, 26)' }" />
-        </template>
+        </template> -->
         <a-avatar :size="40" style="background-color: #fff" @click="chooseEngine(item)">
           <template #icon>
             <img :src="item.image" alt="" />
@@ -13,14 +17,13 @@
         </a-avatar>
       </a-badge>
     </div>
-    <iframe src="https://www.bilibili.com/video/BV17z4y1v7tY/?spm_id_from=333.1007.tianma.1-1-1.click&vd_source=75af4fa4191b57c31017b8df385135a1" frameborder="0"></iframe>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import queryString from "query-string";
-import { CheckCircleOutlined } from "@ant-design/icons-vue";
+import { SearchOutlined } from "@ant-design/icons-vue";
 import { ref, reactive } from "vue";
 const iconModules = import.meta.glob<string>("@/assets/images/home/icon/*.png", { import: "default", eager: true });
 const keyword = ref("");
@@ -74,19 +77,42 @@ electronAPI.onIpcRenderer(({ url }) => {
   background-size: cover;
   box-shadow: inset 0 0 10px 4px #999;
   .search-input {
-    display: block;
-    width: 40%;
+    // display: block;
+    width: 30%;
+    border-radius: 100px;
+    height: 50px;
+    line-height: 50px;
+    padding: 0 14px;
+    :deep(input) {
+      border-radius: 100px;
+      font-size: 16px;
+    }
+    :deep(input::placeholder) {
+      font-size: 16px;
+    }
   }
   .search-type {
     margin-top: 3%;
     display: flex;
     justify-content: center;
-    :deep(.ant-badge) {
-      box-shadow: 0 0 5px 0 #999;
-      background-color: #fff;
+    :deep(.ant-avatar) {
+      background-color: #999;
       border-radius: 50%;
-      margin-right: 30px;
+      margin-right: 20px;
       cursor: pointer;
+      img {
+        padding: 3px;
+      }
+      &:hover {
+        border: 3px solid #91caff;
+        box-shadow: 0 0 13px 4px #91caff;
+      }
+    }
+    .acitve {
+      :deep(.ant-avatar) {
+        border: 3px solid #91caff;
+        box-shadow: 0 0 13px 4px #91caff;
+      }
     }
     :deep(.ant-avatar) {
       padding: 2px;
