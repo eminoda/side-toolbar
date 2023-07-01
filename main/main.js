@@ -1,5 +1,6 @@
 const path = require("path");
 const { app, BrowserWindow, screen, ipcMain, webFrameMain } = require("electron");
+const fs = require("fs");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -7,6 +8,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: true,
     },
   });
 
@@ -64,10 +66,11 @@ ipcMain.handle("main-listen", async (event, args) => {
         height: screenHeight * 0.7,
         webPreferences: {
           preload: path.join(__dirname, "preload.js"),
-          // nodeIntegration: true,
+          nodeIntegration: true,
+          enableRemoteModule: true,
           // contextIsolation: false,
           webSecurity: false,
-          // allowRunningInsecureContent: true,
+          allowRunningInsecureContent: true,
           webviewTag: true,
         },
       });
@@ -81,6 +84,23 @@ ipcMain.handle("main-listen", async (event, args) => {
           delete details.responseHeaders["Content-Security-Policy"];
         }
         callback({ responseHeaders: { ...details.responseHeaders } });
+      });
+      // 请求拦截
+      win.webContents.session.webRequest.onBeforeRequest((details, cb) => {
+        // Can be mainFrame, subFrame, stylesheet, script, image, font, object, xhr, ping, cspReport, media, webSocket or other
+        if (details.resourceType == "xhr") {
+          console.log(`[${details.id}:${details.method},${details.resourceType}]==>`, details.url);
+        }
+        cb(details);
+      });
+      win.webContents.session.webRequest.onCompleted((details) => {
+        // Can be mainFrame, subFrame, stylesheet, script, image, font, object, xhr, ping, cspReport, media, webSocket or other
+        if (details.resourceType == "xhr") {
+          console.log(`[${details.id}:${details.method},${details.resourceType}]<==`, details.url);
+          // if (details.uploadData) {
+          //   console.log(details.uploadData.map((item) => item.bytes.toString()));
+          // }
+        }
       });
       // 覆写 a 标签 href 打开新窗口
       win.webContents.setWindowOpenHandler(({ url, frameName, features, disposition, referrer, postBody }) => {
@@ -101,15 +121,8 @@ ipcMain.handle("main-listen", async (event, args) => {
         const frame = webFrameMain.fromId(frameProcessId, frameRoutingId);
         if (frame) {
           console.log("win--did-frame-navigate", url);
-          const code = `
-          const open = window.open;
-          window.open = (strUrl, strWindowName, strWindowFeatures) => {
-            if(strWindowName==='_top'){
-              console.log('不允许重写顶级窗口')
-              return;
-            }
-  open(strUrl, strWindowName == "_top" ? "_blank" : strWindowName, strWindowFeatures);
-};`;
+          const code = fs.readFileSync(path.join(__dirname, "./proxy.js")).toString();
+          console.log();
           frame.executeJavaScript(code);
         }
       });

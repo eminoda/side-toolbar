@@ -9,5 +9,8 @@
   "author": "eminoda",
   "devDependencies": {
     "electron": "^25.2.0"
+  },
+  "dependencies": {
+    "mockjs": "^1.1.0"
   }
 }

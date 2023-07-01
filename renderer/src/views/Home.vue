@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <a-input class="search-input" v-model:value="keyword" placeholder="请输入查询的内容">
+    <a-input class="search-input" v-model:value="keyword" placeholder="请输入查询的内容" @pressEnter="onSearch">
       <template #suffix>
         <search-outlined @click="onSearch" />
       </template>

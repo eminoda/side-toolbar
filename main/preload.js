@@ -1,4 +1,16 @@
 const { contextBridge, ipcRenderer } = require("electron");
+var Mock = require("mockjs");
+
+Mock.setup({
+  timeout: 400,
+});
+
+Mock.mock(/\/unitrust-id-admin/, (...args) => {
+  console.log(args)
+  return {
+    list: true,
+  };
+});
 
 contextBridge.exposeInMainWorld("electronAPI", {
   toIpcMain: (channel, args) => {
