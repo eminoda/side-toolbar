@@ -1,10 +1,16 @@
 /// <reference types="vite/client" />
+/// <reference types="../../main/node_modules/electron" />
 
-type ipcFunction = (args: { url: string, channel: string, title: string }) => void;
+type ipcFunction = (channel: string, args: any) => void;
 
 declare namespace electronAPI {
     function toIpcMain<T>(channel: string, ...args: Array[]): Promise<T>
     function onIpcRenderer<T>(callback: ipcFunction): Promise<T>
+    var mock: string
+    var preload: string
+}
+declare namespace tab {
+    function getBrowserWindow<T>(id: any)
 }
 
 interface SearchEngine {
@@ -15,8 +21,9 @@ interface SearchEngine {
     show: boolean = false
 }
 
-interface WindowIframe {
+interface WindowTabs {
+    id: string
     url: string
     title?: string
-    show: boolean = false
+    show?: boolean = false
 }

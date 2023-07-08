@@ -1,43 +1,43 @@
 <template>
   <!-- 侧边栏 -->
   <div class="side-toolbar">
-    <up-outlined class="go-icon up" />
-    <div class="inner">
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>新开窗口</template>
-          <div class="img-wrap">
-            <windows-outlined @click="openBrowser" />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>开发</template>
-          <div class="img-wrap">
-            <!-- <tool-outlined /> -->
-            <code-outlined />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>实用功能</template>
-          <div class="img-wrap">
-            <experiment-outlined />
-          </div>
-        </a-tooltip>
-      </div>
-      <div class="side-toolbar-icon">
-        <a-tooltip placement="right">
-          <template #title>设置</template>
-          <div class="img-wrap">
-            <setting-outlined />
-          </div>
-        </a-tooltip>
+    <div style="-webkit-app-region: no-drag">
+      <div class="inner">
+        <div class="side-toolbar-icon">
+          <a-tooltip placement="right">
+            <!-- <template #title>新开窗口</template> -->
+            <div class="img-wrap">
+              <windows-outlined @click="openBrowser" />
+            </div>
+          </a-tooltip>
+        </div>
+        <div class="side-toolbar-icon">
+          <a-tooltip placement="right">
+            <!-- <template #title>开发</template> -->
+            <div class="img-wrap">
+              <!-- <tool-outlined /> -->
+              <code-outlined />
+            </div>
+          </a-tooltip>
+        </div>
+        <div class="side-toolbar-icon">
+          <a-tooltip placement="right">
+            <!-- <template #title>实用功能</template> -->
+            <div class="img-wrap">
+              <experiment-outlined />
+            </div>
+          </a-tooltip>
+        </div>
+        <div class="side-toolbar-icon">
+          <a-tooltip placement="right">
+            <!-- <template #title>设置</template> -->
+            <div class="img-wrap">
+              <setting-outlined />
+            </div>
+          </a-tooltip>
+        </div>
       </div>
     </div>
-    <down-outlined class="go-icon down" />
   </div>
 </template>
 
@@ -45,34 +45,25 @@
 import { UpOutlined, DownOutlined, SettingOutlined, CodeOutlined, ExperimentOutlined, WindowsOutlined } from "@ant-design/icons-vue";
 
 const openBrowser = () => {
-  // window.open("http://www.baidu.com");
-  electronAPI.toIpcMain("win:open", { title: "新标签页" });
+  try {
+    // 打开搜索窗口
+    electronAPI.toIpcMain("win:open", { name: "searchWin" });
+  } catch (err) {
+    console.log(err);
+  }
 };
 </script>
 
 <style scoped lang="less">
 .side-toolbar {
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
   width: 88px;
   height: 400px;
   background-color: rgba(145, 202, 255, 0.4);
   border-radius: 8px;
-  padding: 24px 12px;
+  padding: 24px 14px;
   position: relative;
-  .go-icon {
-    position: absolute;
-    left: 50%;
-    transform: scaleX(2);
-    font-size: 14px;
-    margin-left: -7px;
-    color: #8c8c8c;
-    cursor: pointer;
-  }
-  .up {
-    top: 3px;
-  }
-  .down {
-    bottom: 3px;
-  }
   .inner {
     display: flex;
     flex-direction: column;

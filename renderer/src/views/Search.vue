@@ -38,6 +38,11 @@ const searchEngines = reactive(
       show: true,
     },
     {
+      url: "https://google.com/search",
+      field: "q",
+      name: "chrome",
+    },
+    {
       url: "https://baidu.com/s",
       field: "wd",
       name: "baidu",
@@ -51,7 +56,11 @@ const onSearch = () => {
   if (keyword.value) {
     const { url, field } = searchEngines.find((item) => item.show)!;
     const searchStr = queryString.stringify({ [field]: keyword.value });
-    window.open(`${url}?${searchStr}`);
+    // electronAPI.toIpcMain("win:open", { name: "tabWin", tabUrl: `${url}?${searchStr}` });
+    router.push({
+      path: "/tabWin",
+      query: { url: encodeURIComponent(`${url}?${searchStr}`) },
+    });
   }
 };
 const chooseEngine = (engine: SearchEngine) => {
@@ -60,10 +69,6 @@ const chooseEngine = (engine: SearchEngine) => {
   });
   onSearch();
 };
-// 将拦截 window.open，将跳转链接回调到这里
-electronAPI.onIpcRenderer(({ url }) => {
-  router.push({ path: "/win", query: { url: encodeURIComponent(url) } });
-});
 </script>
 
 <style scoped lang="less">
@@ -80,8 +85,8 @@ electronAPI.onIpcRenderer(({ url }) => {
     // display: block;
     width: 30%;
     border-radius: 100px;
-    height: 50px;
-    line-height: 50px;
+    height: 46px;
+    line-height: 46px;
     padding: 0 14px;
     :deep(input) {
       border-radius: 100px;

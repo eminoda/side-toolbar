@@ -1,0 +1,31 @@
+body {
+  background: transparent !important;
+}
+body #app {
+  border-radius: 10px;
+}
+webview {
+  flex: 1;
+}
+
+webview[hidden] {
+  display: none;
+}
+/* webview html::-webkit-scrollbar {
+  width: 10px;
+  height: auto;
+}
+webview html::-webkit-scrollbar-track {
+  background: rgb(239, 239, 239);
+  border-radius: 6px;
+}
+webview html::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 10px;
+}
+webview html::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+webview html::-webkit-scrollbar-corner {
+  background: #179a16;
+} */

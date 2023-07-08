@@ -1,27 +1,22 @@
 const { contextBridge, ipcRenderer } = require("electron");
-var Mock = require("mockjs");
-
-Mock.setup({
-  timeout: 400,
-});
-
-Mock.mock(/\/unitrust-id-admin/, (...args) => {
-  console.log(args)
-  return {
-    list: true,
-  };
-});
+const fs = require("fs");
+const path = require("path");
 
 contextBridge.exposeInMainWorld("electronAPI", {
   toIpcMain: (channel, args) => {
-    console.log({ channel, ...args });
+    console.log("[IPC] renderer to main", { channel, ...args });
     return ipcRenderer.invoke("main-listen", { channel, ...args });
   },
+
   onIpcRenderer: (callback) => {
     return ipcRenderer.on("renderer-listen", (event, ...args) => {
-      return callback(args[0]);
+      console.log("[IPC] main to renderer", args);
+      const { channel, ..._args } = args[0];
+      return callback(channel, _args);
     });
   },
+  preload: path.resolve(__dirname, "./preload.js"),
+  mock: path.resolve(__dirname, "./mock.js"),
 });
 
 window.addEventListener("DOMContentLoaded", () => {
