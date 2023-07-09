@@ -23,7 +23,7 @@ module.exports = (options = {}) => {
   });
 
   win.loadURL(url);
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   /**
    * 覆写请求头，阻止 iframe，CSP 安全策略
