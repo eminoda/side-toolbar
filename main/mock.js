@@ -4,13 +4,8 @@ contextBridge.exposeInMainWorld("_Mock", {
   getMockApiList: function () {
     const mockApiList = [
       {
-        template: "/unitrust-id-admin",
-        responseData: {
-          code: 0,
-          result: {
-            token: 11
-          }
-        },
+        template: "/sugrec",
+        responseData: { err_no: 0, errmsg: "", queryid: "0xcafffea3ee4a37" },
       },
     ];
     return mockApiList;

@@ -32,7 +32,7 @@ ipcMain.handle("main-listen", async (event, args) => {
     if (name === "searchWin") {
       return searchWin();
     } else if (name === "tabWin") {
-      return tabWin();
+      return tabWin({ url: _args.url });
     } else {
       throw new Error("window name is not defined");
     }

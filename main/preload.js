@@ -17,6 +17,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   preload: path.resolve(__dirname, "./preload.js"),
   mock: path.resolve(__dirname, "./mock.js"),
+  getMockApiList: function () {
+    const mockApiList = [
+      {
+        template: "/sugrec",
+        responseData: { err_no: 0, errmsg: "", queryid: "0xcafffea3ee4a37" },
+      },
+    ];
+    return mockApiList;
+  },
 });
 
 window.addEventListener("DOMContentLoaded", () => {

@@ -2,8 +2,6 @@ const path = require("path");
 const { app, BrowserWindow, screen, ipcMain, webFrameMain } = require("electron");
 
 module.exports = (options = {}) => {
-  const url = "http://localhost:5173/home";
-
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
@@ -20,7 +18,7 @@ module.exports = (options = {}) => {
       webviewTag: true,
     },
   });
-  win.loadURL("http://localhost:5173/tabWin");
+  win.loadURL("http://localhost:5173/tabWin?url=" + options.url);
 
   win.webContents.on("dom-ready", () => {
     win.webContents.send("renderer-listen", { channel: "current-win", id: win.id });

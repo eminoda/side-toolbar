@@ -1,7 +1,14 @@
 <template>
   <div class="tag-win">
+    <a-input v-if="tabs.length > 0" v-model:value="tabs[tabs.length - 1].url">
+      <template #addonBefore>
+        <a-select v-model:value="protocol" style="width: 90px">
+          <a-select-option value="Http://">Http://</a-select-option>
+          <a-select-option value="Https://">Https://</a-select-option>
+        </a-select>
+      </template>
+    </a-input>
     <!-- tabs -->
-    <div>{{ activeKey }}</div>
     <a-tabs v-model:activeKey="activeKey" type="editable-card" hide-add @edit="onEdit">
       <a-tab-pane class="container" :key="item.id" :tab="item.title" v-for="(item, index) in tabs" :closable="item.show">
         <!-- <div ref="winRef" style="flex: 1"></div> -->
@@ -10,7 +17,6 @@
     <div class="win-container"></div>
   </div>
 </template>
-.
 
 <script setup lang="ts">
 import { onMounted, ref, reactive, unref } from "vue";
@@ -23,6 +29,7 @@ const url = ref(decodeURIComponent(<string>route.query.url));
 const parentWinId = ref("");
 const activeKey = ref("");
 const tabs = reactive(<WindowTabs[]>[]);
+const protocol = ref<string>("Http://");
 
 electronAPI.toIpcMain("current-win").then((id) => {
   parentWinId.value = String(id);
@@ -79,15 +86,41 @@ const createWebview = (url: string) => {
   });
 
   webview?.addEventListener("dom-ready", () => {
-    // webview!.openDevTools();
+    webview!.openDevTools();
     const winContentId = webview!.getWebContentsId();
     webview.executeJavaScript(`
         electronAPI.toIpcMain('new-win-interceptor',{winId:${parentWinId.value}})
+    `);
+    webview.executeJavaScript(`
+    //https://github.com/electron/electron/issues/23722
+      (function(){
+        debugger
+        var script = document.createElement("script");
+        script.src = "http://localhost:5173/mock-min.js";
+        script.onload = script.onreadystatechange = function () {
+          try{
+            const list = electronAPI.getMockApiList()
+            console.log(list)
+            alert(1)
+            list.forEach(item=>{
+              console.log(Mock)
+              Mock.mock(new RegExp(item.template),()=>{
+                debugger
+                return item.responseData
+              })
+            })
+          }catch(err){
+            console.log(err)
+          };0
+        }
+        document.body.appendChild(script);
+      })(window)
     `);
     const title = webview.getTitle();
     const currentId = webview.getAttribute("id");
     tabs.find((tab) => tab.id == currentId)!.title = title;
   });
+  
   webview?.addEventListener("will-navigate", ({ url }) => {
     debugger;
     createWebview(url);
