@@ -126,5 +126,8 @@ electronAPI.onIpcRenderer((channel, args) => {
     justify-content: flex-start;
     height: 100%;
   }
+  :deep(.ant-tabs > .ant-tabs-nav, .ant-tabs > div > .ant-tabs-nav) {
+    margin-bottom: 0;
+  }
 }
 </style>
