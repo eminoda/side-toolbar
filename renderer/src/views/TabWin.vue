@@ -1,6 +1,7 @@
 <template>
   <div class="tag-win">
     <!-- tabs -->
+    <div>{{ activeKey }}</div>
     <a-tabs v-model:activeKey="activeKey" type="editable-card" hide-add @edit="onEdit">
       <a-tab-pane class="container" :key="item.id" :tab="item.title" v-for="(item, index) in tabs" :closable="item.show">
         <!-- <div ref="winRef" style="flex: 1"></div> -->
@@ -13,10 +14,11 @@
 
 <script setup lang="ts">
 import { onMounted, ref, reactive, unref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const preload = electronAPI.preload;
 const route = useRoute();
+const router = useRouter();
 const url = ref(decodeURIComponent(<string>route.query.url));
 const parentWinId = ref("");
 const activeKey = ref("");
@@ -43,13 +45,15 @@ const onEdit = (targetKey: string | MouseEvent, action: string) => {
         }
       });
     } else {
-      // 回到上个窗口
+      // 回到搜索窗口
+      router.back();
     }
   }
 };
 
 // 创建 webview 容器
 const createWebview = (url: string) => {
+  console.log(`[创建新 webview] ${url}`);
   const id = String(Date.now());
 
   const historyWebview = document.querySelectorAll(".win-container webview");
@@ -65,19 +69,28 @@ const createWebview = (url: string) => {
   webview.setAttribute("id", id);
   webview.setAttribute("show", "");
 
+  activeKey.value = id;
+
+  tabs.push({
+    id,
+    url,
+    title: "正在加载",
+    show: true,
+  });
+
   webview?.addEventListener("dom-ready", () => {
     // webview!.openDevTools();
     const winContentId = webview!.getWebContentsId();
     webview.executeJavaScript(`
         electronAPI.toIpcMain('new-win-interceptor',{winId:${parentWinId.value}})
     `);
-    tabs.push({
-      id,
-      url,
-      title: webview.getTitle(),
-      show: true,
-    });
-    activeKey.value = id;
+    const title = webview.getTitle();
+    const currentId = webview.getAttribute("id");
+    tabs.find((tab) => tab.id == currentId)!.title = title;
+  });
+  webview?.addEventListener("will-navigate", ({ url }) => {
+    debugger;
+    createWebview(url);
   });
   document.querySelector(".win-container")?.appendChild(webview);
 };
@@ -89,9 +102,10 @@ onMounted(() => {
 });
 
 electronAPI.onIpcRenderer((channel, args) => {
+  console.log(args, channel);
   if (channel === "new-tab") {
     const url = args.url;
-    createWebview(url);
+    createWebview(url, 2);
   }
 });
 </script>
