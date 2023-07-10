@@ -48,7 +48,7 @@ const openBrowser = () => {
   try {
     // 打开搜索窗口
     // electronAPI.toIpcMain("win:open", { name: "searchWin" });
-    electronAPI.toIpcMain("win:open", { name: "tabWin", url: decodeURIComponent("https://www.baidu.com/") });
+    electronAPI.toIpcMain("win:open", { name: "tabWin", url: decodeURIComponent("https://juejin.cn/") });
   } catch (err) {
     console.log(err);
   }

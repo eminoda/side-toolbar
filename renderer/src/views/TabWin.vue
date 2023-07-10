@@ -75,6 +75,7 @@ const createWebview = (url: string) => {
   webview.setAttribute("allowpopups", "");
   webview.setAttribute("id", id);
   webview.setAttribute("show", "");
+  webview.setAttribute("disablewebsecurity", "");
 
   activeKey.value = id;
 
@@ -94,16 +95,12 @@ const createWebview = (url: string) => {
     webview.executeJavaScript(`
     //https://github.com/electron/electron/issues/23722
       (function(){
-        debugger
         var script = document.createElement("script");
-        script.src = "http://localhost:5173/mock-min.js";
+        script.src = "http://192.168.1.3:5173/mock-min.js";
         script.onload = script.onreadystatechange = function () {
           try{
             const list = electronAPI.getMockApiList()
-            console.log(list)
-            alert(1)
             list.forEach(item=>{
-              console.log(Mock)
               Mock.mock(new RegExp(item.template),()=>{
                 debugger
                 return item.responseData
@@ -120,9 +117,8 @@ const createWebview = (url: string) => {
     const currentId = webview.getAttribute("id");
     tabs.find((tab) => tab.id == currentId)!.title = title;
   });
-  
+
   webview?.addEventListener("will-navigate", ({ url }) => {
-    debugger;
     createWebview(url);
   });
   document.querySelector(".win-container")?.appendChild(webview);
