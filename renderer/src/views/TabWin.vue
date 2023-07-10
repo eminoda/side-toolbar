@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { onMounted, ref, reactive, unref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { Modal } from "ant-design-vue";
 
 const preload = electronAPI.preload;
 const route = useRoute();
@@ -56,6 +57,15 @@ const onEdit = (targetKey: string | MouseEvent, action: string) => {
       router.back();
     }
   }
+};
+
+const urlChangeDialog = (url: string) => {
+  Modal.confirm({
+    content: `将要跳转链接：${url}`,
+    onOk: () => {
+      createWebview(url);
+    },
+  });
 };
 
 // 创建 webview 容器
@@ -119,7 +129,8 @@ const createWebview = (url: string) => {
   });
 
   webview?.addEventListener("will-navigate", ({ url }) => {
-    createWebview(url);
+    urlChangeDialog(url);
+    webview.stop();
   });
   document.querySelector(".win-container")?.appendChild(webview);
 };
@@ -133,8 +144,11 @@ onMounted(() => {
 electronAPI.onIpcRenderer((channel, args) => {
   console.log(args, channel);
   if (channel === "new-tab") {
-    const url = args.url;
-    createWebview(url, 2);
+    const { url, disposition } = args;
+    // 新开 tab，由用户决定是否展示
+    if (disposition === "foreground-tab") {
+    }
+    createWebview(url);
   }
 });
 </script>

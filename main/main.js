@@ -49,9 +49,10 @@ ipcMain.handle("main-listen", async (event, args) => {
     const winId = _args.winId;
     const win = BrowserWindow.fromId(winId);
 
+    // foreground-tab, background-tab, new-window or other
     event.sender.setWindowOpenHandler(({ url, frameName, features, disposition, referrer, postBody }) => {
       console.log("[tab window] abort open new window", `[${disposition}] ${url}`);
-      win.send("renderer-listen", { channel: "new-tab", url });
+      win.send("renderer-listen", { channel: "new-tab", url, disposition });
       return { action: "deny" };
     });
   } else {
