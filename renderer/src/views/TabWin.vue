@@ -63,21 +63,31 @@ const urlChangeDialog = (url: string) => {
   Modal.confirm({
     content: `将要跳转链接：${url}`,
     onOk: () => {
-      createWebview(url);
+      createWebview(url, true);
     },
   });
 };
 
 // 创建 webview 容器
-const createWebview = (url: string) => {
+const createWebview = (url: string, isCreateTab?: boolean) => {
   console.log(`[创建新 webview] ${url}`);
   const id = String(Date.now());
 
   const historyWebview = document.querySelectorAll(".win-container webview");
-  historyWebview.forEach((item) => {
+  historyWebview.forEach((item, index) => {
+    // 根据 isCreateTab 判断是否开新 tab 页，考虑回退麻烦，先注释掉
+    // if (!isCreateTab && index === historyWebview.length - 1) {
+    //   alert("1");
+    //   item.setAttribute("src", url);
+    // } else {
+    //   item.removeAttribute("show");
+    //   item.setAttribute("hidden", "");
+    // }
     item.removeAttribute("show");
     item.setAttribute("hidden", "");
   });
+
+  // if (isCreateTab) {
   const webview = <Electron.WebviewTag>document.createElement("webview");
   webview.setAttribute("src", url);
   webview.setAttribute("preload", preload);
@@ -87,68 +97,70 @@ const createWebview = (url: string) => {
   webview.setAttribute("show", "");
   webview.setAttribute("disablewebsecurity", "");
 
-  activeKey.value = id;
-
   tabs.push({
     id,
     url,
     title: "正在加载",
     show: true,
   });
+  activeKey.value = id;
 
   webview?.addEventListener("dom-ready", () => {
-    webview!.openDevTools();
+    webview.openDevTools();
+    console.log("webview dom ready ...");
     const winContentId = webview!.getWebContentsId();
     webview.executeJavaScript(`
+        console.log('窗口加载完毕')
         electronAPI.toIpcMain('new-win-interceptor',{winId:${parentWinId.value}})
     `);
     webview.executeJavaScript(`
     //https://github.com/electron/electron/issues/23722
       (function(){
-        var script = document.createElement("script");
-        script.src = "http://192.168.1.3:5173/mock-min.js";
-        script.onload = script.onreadystatechange = function () {
-          try{
-            const list = electronAPI.getMockApiList()
-            list.forEach(item=>{
-              Mock.mock(new RegExp(item.template),()=>{
-                debugger
-                return item.responseData
-              })
-            })
-          }catch(err){
-            console.log(err)
-          };0
-        }
-        document.body.appendChild(script);
+        // var script = document.createElement("script");
+        // script.src = "https://cdn.jsdelivr.net/npm/mockjs@1.1.0/dist/mock-min.min.js";
+        // script.onload = script.onreadystatechange = function () {
+        //   try{
+        //     console.log('mockjs is ready...')
+        //     const list = electronAPI.getMockApiList()
+        //     list.forEach(item=>{
+        //       Mock.mock(new RegExp(item.template),()=>{
+        //         debugger
+        //         return item.responseData
+        //       })
+        //     })
+        //   }catch(err){
+        //     console.log(err)
+        //   };0
+        // }
+        // document.body.appendChild(script);
       })(window)
     `);
     const title = webview.getTitle();
     const currentId = webview.getAttribute("id");
     tabs.find((tab) => tab.id == currentId)!.title = title;
   });
-
-  webview?.addEventListener("will-navigate", ({ url }) => {
-    urlChangeDialog(url);
-    webview.stop();
-  });
   document.querySelector(".win-container")?.appendChild(webview);
+  // }
 };
 
 onMounted(() => {
   if (url.value) {
-    createWebview(unref(url));
+    createWebview(unref(url), true);
   }
 });
 
 electronAPI.onIpcRenderer((channel, args) => {
+  debugger;
+  const { url, disposition } = args;
   console.log(args, channel);
   if (channel === "new-tab") {
-    const { url, disposition } = args;
-    // 新开 tab，由用户决定是否展示
-    if (disposition === "foreground-tab") {
-    }
-    createWebview(url);
+    urlChangeDialog(url);
+    // createWebview(url, true);
+  }
+  // a标签本窗口刷新
+  else if (channel === "update-tab") {
+    urlChangeDialog(url);
+    // createWebview(url, false);
   }
 });
 </script>

@@ -23,6 +23,10 @@ module.exports = (options = {}) => {
   win.webContents.on("dom-ready", () => {
     win.webContents.send("renderer-listen", { channel: "current-win", id: win.id });
   });
+
+  win.webContents.on("will-navigate", (details) => {
+    console.log("'will-navigate'", details);
+  });
   win.webContents.openDevTools();
 
   return true;

@@ -47,8 +47,8 @@ import { UpOutlined, DownOutlined, SettingOutlined, CodeOutlined, ExperimentOutl
 const openBrowser = () => {
   try {
     // 打开搜索窗口
-    // electronAPI.toIpcMain("win:open", { name: "searchWin" });
-    electronAPI.toIpcMain("win:open", { name: "tabWin", url: decodeURIComponent("https://www.google.com/search?q=js+xhr+github") });
+    electronAPI.toIpcMain("win:open", { name: "searchWin" });
+    // electronAPI.toIpcMain("win:open", { name: "tabWin", url: decodeURIComponent("https://www.google.com/?q=1") });
   } catch (err) {
     console.log(err);
   }

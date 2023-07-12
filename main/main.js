@@ -21,8 +21,8 @@ app.on("web-contents-created", (event, webContents) => {
   console.log(webContents.getTitle());
 });
 
-app.commandLine.appendSwitch("charset", "utf-8");
-app.commandLine.appendSwitch("disable-site-isolation-trials");
+app.commandLine.appendSwitch("ignore-certificate-errors");
+
 ipcMain.handle("main-listen", async (event, args) => {
   const { channel, ..._args } = args;
   // console.log(channel, _args);
@@ -54,6 +54,18 @@ ipcMain.handle("main-listen", async (event, args) => {
       console.log("[tab window] abort open new window", `[${disposition}] ${url}`);
       win.send("renderer-listen", { channel: "new-tab", url, disposition });
       return { action: "deny" };
+    });
+    // HTML a tag href
+    event.sender.on("will-navigate", (details) => {
+      console.log("[navigate is tag a]", details.url);
+      details.preventDefault();
+      win.send("renderer-listen", { channel: "update-tab", url: details.url });
+    });
+    event.sender.session.webRequest.onBeforeSendHeaders((details, callback) => {
+      if (details.resourceType == "xhr") {
+        // console.log(details.url);
+      }
+      callback(details);
     });
   } else {
     console.log(args);
