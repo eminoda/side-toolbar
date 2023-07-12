@@ -1,17 +1,18 @@
 <template>
   <div class="tag-win">
-    <a-input v-if="tabs.length > 0" v-model:value="tabs[tabs.length - 1].url">
+    <a-input v-model:value="url" spellcheck="false">
       <template #addonBefore>
         <a-select v-model:value="protocol" style="width: 90px">
-          <a-select-option value="Http://">Http://</a-select-option>
-          <a-select-option value="Https://">Https://</a-select-option>
+          <a-select-option value="http://">http://</a-select-option>
+          <a-select-option value="https://">https://</a-select-option>
         </a-select>
       </template>
     </a-input>
     <!-- tabs -->
     <a-tabs v-model:activeKey="activeKey" type="editable-card" hide-add @edit="onEdit">
-      <a-tab-pane class="container" :key="item.id" :tab="item.title" v-for="(item, index) in tabs" :closable="item.show">
-        <!-- <div ref="winRef" style="flex: 1"></div> -->
+      <!-- <template slot="renderTabBar">1</template> -->
+      <a-tab-pane class="container" :key="item.id" v-for="(item, index) in tabs" :closable="item.show">
+        <template #tab>{{ item.title }}</template>
       </a-tab-pane>
     </a-tabs>
     <div class="win-container"></div>
@@ -26,11 +27,23 @@ import { Modal } from "ant-design-vue";
 const preload = electronAPI.preload;
 const route = useRoute();
 const router = useRouter();
-const url = ref(decodeURIComponent(<string>route.query.url));
+
+const url = ref("");
+const protocol = ref<string>("http://");
+const host = ref("");
+
+const parseUrl = (_url: string) => {
+  try {
+    const result = new URL(_url);
+    protocol.value = result.protocol + "//";
+    url.value = result.href.replace(protocol.value, "");
+    host.value = result.host;
+  } catch (err) {}
+};
+
 const parentWinId = ref("");
 const activeKey = ref("");
 const tabs = reactive(<WindowTabs[]>[]);
-const protocol = ref<string>("Http://");
 
 electronAPI.toIpcMain("current-win").then((id) => {
   parentWinId.value = String(id);
@@ -70,9 +83,13 @@ const urlChangeDialog = (url: string) => {
 
 // 创建 webview 容器
 const createWebview = (url: string, isCreateTab?: boolean) => {
+  debugger;
+  parseUrl(url);
+
   console.log(`[创建新 webview] ${url}`);
   const id = String(Date.now());
 
+  // 将历史 webview 设置隐藏
   const historyWebview = document.querySelectorAll(".win-container webview");
   historyWebview.forEach((item, index) => {
     // 根据 isCreateTab 判断是否开新 tab 页，考虑回退麻烦，先注释掉
@@ -88,25 +105,28 @@ const createWebview = (url: string, isCreateTab?: boolean) => {
   });
 
   // if (isCreateTab) {
+
+  // 创建新的 webview
   const webview = <Electron.WebviewTag>document.createElement("webview");
   webview.setAttribute("src", url);
   webview.setAttribute("preload", preload);
   webview.setAttribute("nodeintegration", "");
   webview.setAttribute("allowpopups", "");
   webview.setAttribute("id", id);
-  webview.setAttribute("show", "");
-  webview.setAttribute("disablewebsecurity", "");
+  webview.setAttribute("show", ""); // 显示
+  // webview.setAttribute("disablewebsecurity", "");
 
   tabs.push({
     id,
     url,
     title: "正在加载",
     show: true,
+    ...new URL(url),
   });
   activeKey.value = id;
 
   webview?.addEventListener("dom-ready", () => {
-    webview.openDevTools();
+    // webview.openDevTools();
     console.log("webview dom ready ...");
     const winContentId = webview!.getWebContentsId();
     webview.executeJavaScript(`
@@ -144,8 +164,9 @@ const createWebview = (url: string, isCreateTab?: boolean) => {
 };
 
 onMounted(() => {
-  if (url.value) {
-    createWebview(unref(url), true);
+  const _url = <string>route.query.url ? decodeURIComponent(<string>route.query.url) : "";
+  if (_url) {
+    createWebview(_url, true);
   }
 });
 

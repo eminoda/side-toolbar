@@ -21,7 +21,12 @@ interface SearchEngine {
     show: boolean = false
 }
 
-interface WindowTabs {
+type TabManageProps {
+    host: string
+    protocol: string
+}
+
+interface WindowTabs extends TabManageProps {
     id: string
     url: string
     title?: string
