@@ -5,6 +5,7 @@ const { app, BrowserWindow, screen, ipcMain, webFrameMain, webContents, ipcRende
 const siderBarWin = require("./win/siderBar");
 const searchWin = require("./win/search");
 const tabWin = require("./win/tab");
+const subMenusWin = require("./win/subMenus");
 
 app.whenReady().then(() => {
   siderBarWin();
@@ -33,6 +34,9 @@ ipcMain.handle("main-listen", async (event, args) => {
       return searchWin();
     } else if (name === "tabWin") {
       return tabWin({ url: _args.url });
+    } else if (name === "subMenusWin") {
+      const { position, type } = _args;
+      return subMenusWin({ position, type });
     } else {
       throw new Error("window name is not defined");
     }

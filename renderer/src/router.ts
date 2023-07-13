@@ -3,12 +3,15 @@ import SiderBar from '@/views/SiderBar.vue'
 import Search from '@/views/Search.vue'
 import Win from '@/views/Win.vue'
 import TabWin from '@/views/TabWin.vue'
+import SubMenus from '@/views/SubMenus.vue'
+
 const routes = [
     { path: '/', redirect: '/siderBar' },
     { path: '/siderBar', component: SiderBar },
     { path: '/search', component: Search },
     { path: '/win', component: Win },
     { path: '/tabWin', component: TabWin },
+    { path: '/subMenus', component: SubMenus },
 ]
 
 const router = VueRouter.createRouter({

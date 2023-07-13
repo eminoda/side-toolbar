@@ -9,7 +9,7 @@ module.exports = (options = {}) => {
     title: "new tab",
     width: screenWidth * 0.7,
     height: screenHeight * 0.7,
-    resizable: false,
+    resizable: true,
     autoHideMenuBar: true,
     webPreferences: {
       devTools: true,

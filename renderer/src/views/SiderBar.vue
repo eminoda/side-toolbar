@@ -7,7 +7,7 @@
           <a-tooltip placement="right">
             <!-- <template #title>新开窗口</template> -->
             <div class="img-wrap">
-              <windows-outlined @click="openBrowser" />
+              <IeOutlined style="color: #1fbbee" @click="openBrowser" />
             </div>
           </a-tooltip>
         </div>
@@ -21,12 +21,9 @@
           </a-tooltip>
         </div>
         <div class="side-toolbar-icon">
-          <a-tooltip placement="right">
-            <!-- <template #title>实用功能</template> -->
-            <div class="img-wrap">
-              <experiment-outlined />
-            </div>
-          </a-tooltip>
+          <div class="img-wrap" ref="menuRef">
+            <experiment-outlined @click="(e) => openSubMenus(e, 'develop')" />
+          </div>
         </div>
         <div class="side-toolbar-icon">
           <a-tooltip placement="right">
@@ -42,8 +39,16 @@
 </template>
 
 <script setup lang="ts">
-import { UpOutlined, DownOutlined, SettingOutlined, CodeOutlined, ExperimentOutlined, WindowsOutlined } from "@ant-design/icons-vue";
+import { UpOutlined, DownOutlined, IeOutlined, SettingOutlined, CodeOutlined, ExperimentOutlined, WindowsOutlined } from "@ant-design/icons-vue";
+import { ref } from "vue";
 
+const menuRef = ref<HTMLElement | null>(null);
+
+const openSubMenus = (event: MouseEvent, type: string) => {
+  console.log(menuRef.value?.getBoundingClientRect());
+  const { left, width, height, top } = menuRef.value?.getBoundingClientRect()!;
+  electronAPI.toIpcMain("win:open", { name: "subMenusWin", type, position: { x: left * 2 + width, y: top + height / 2 } });
+};
 const openBrowser = () => {
   try {
     // 打开搜索窗口

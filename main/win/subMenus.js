@@ -2,16 +2,26 @@ const path = require("path");
 const { app, BrowserWindow, screen, ipcMain, webFrameMain } = require("electron");
 
 module.exports = (options = {}) => {
-  const url = "http://localhost:5173";
+  const url = "http://localhost:5173/subMenus";
 
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
+  const [winX, winY] = BrowserWindow.getAllWindows()
+    .find((win) => win.getTitle() == "siderBar")
+    .getPosition();
+
+  const winWidth = 84;
+
+  const offsetX = winX > screenWidth * 0.9 ? -1 * winWidth * 2 : winWidth;
+  console.log([winX, winY]);
+  console.log(options.position, offsetX);
+  console.log(winX + Number(offsetX));
   const win = new BrowserWindow({
-    width: 88,
-    height: 400,
-    x: 100,
-    y: parseInt((screenHeight - 400) / 2),
+    width: 60,
+    height: 150,
+    x: winX + offsetX,
+    y: winY + options.position.y,
     resizable: false,
     autoHideMenuBar: true,
     frame: false,
@@ -25,10 +35,6 @@ module.exports = (options = {}) => {
   });
 
   win.loadURL(url);
-
-  win.on("ready-to-show", () => {
-    win.setTitle("siderBar");
-  });
   // win.webContents.openDevTools();
 
   return true;
