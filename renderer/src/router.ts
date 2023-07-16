@@ -4,6 +4,7 @@ import Search from '@/views/Search.vue'
 import Win from '@/views/Win.vue'
 import TabWin from '@/views/TabWin.vue'
 import SubMenus from '@/views/SubMenus.vue'
+import ScreenShot from '@/views/ScreenShot.vue'
 
 const routes = [
     { path: '/', redirect: '/siderBar' },
@@ -12,6 +13,7 @@ const routes = [
     { path: '/win', component: Win },
     { path: '/tabWin', component: TabWin },
     { path: '/subMenus', component: SubMenus },
+    { path: '/screenShot', component: ScreenShot },
 ]
 
 const router = VueRouter.createRouter({

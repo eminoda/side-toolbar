@@ -4,13 +4,15 @@
   "description": "Hello World!",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "chcp 65001 & electron ."
   },
   "author": "eminoda",
   "devDependencies": {
     "electron": "^25.2.0"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
+    "log4js": "^6.9.1",
     "mockjs": "^1.1.0"
   }
 }

@@ -56,7 +56,6 @@ const onSearch = () => {
   if (keyword.value) {
     const { url, field } = searchEngines.find((item) => item.show)!;
     const searchStr = queryString.stringify({ [field]: keyword.value });
-    // electronAPI.toIpcMain("win:open", { name: "tabWin", tabUrl: `${url}?${searchStr}` });
     router.push({
       path: "/tabWin",
       query: { url: encodeURIComponent(`${url}?${searchStr}`) },

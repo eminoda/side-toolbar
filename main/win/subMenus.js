@@ -35,6 +35,9 @@ module.exports = (options = {}) => {
   });
 
   win.loadURL(url);
+  win.on("ready-to-show", () => {
+    win.setTitle("subMenus");
+  });
   // win.webContents.openDevTools();
 
   return true;

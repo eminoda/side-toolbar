@@ -12,6 +12,7 @@ declare module 'vue' {
     AButton: typeof import('ant-design-vue/es')['Button']
     AInput: typeof import('ant-design-vue/es')['Input']
     AInputSearch: typeof import('ant-design-vue/es')['InputSearch']
+    APopover: typeof import('ant-design-vue/es')['Popover']
     ASelect: typeof import('ant-design-vue/es')['Select']
     ASelectOption: typeof import('ant-design-vue/es')['SelectOption']
     ATabPane: typeof import('ant-design-vue/es')['TabPane']

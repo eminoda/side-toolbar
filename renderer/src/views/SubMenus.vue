@@ -2,7 +2,7 @@
   <div class="win">
     <div class="inner">
       <scan-outlined class="icon" />
-      <expand-outlined class="icon" />
+      <expand-outlined class="icon" @click="screenShot" />
       <bg-colors-outlined class="icon" />
     </div>
   </div>
@@ -10,6 +10,9 @@
 
 <script setup>
 import { ScanOutlined, ExpandOutlined, BgColorsOutlined, UpOutlined, DownOutlined, IeOutlined, SettingOutlined, CodeOutlined, WindowsOutlined } from "@ant-design/icons-vue";
+const screenShot = () => {
+  electronAPI.toIpcMain("development", { name: "search" });
+};
 </script>
 
 <style scoped lang="less">
