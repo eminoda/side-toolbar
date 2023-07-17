@@ -1,11 +1,17 @@
 <template>
-  <div class="page" @mousemove="moveMouse">
+  <!-- <div class="page" @mousemove="moveMouse">
     <div class="test">
       <div>鼠标移动坐标：{{ movePoint }}</div>
       <div>点击起始坐标：{{ startPoint }}</div>
       <div>结束坐标：{{ endPoint }}</div>
     </div>
-    <!-- 指针 -->
+    <div ref="moveRef" class="mouse-point" :style="movePosition">
+      <plus-outlined @mousedown="startShot" @mouseup="endShot" />
+    </div>
+    <div class="preview-rect" :style="previewRectStyle"></div>
+  </div> -->
+  <div class="page" @mousemove="moveMouse">
+    <img :src="screenImage" alt="" />
     <div ref="moveRef" class="mouse-point" :style="movePosition">
       <plus-outlined @mousedown="startShot" @mouseup="endShot" />
     </div>
@@ -14,12 +20,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from "vue";
+import { reactive, ref, computed, onBeforeMount } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 
+const screenImage = ref<string>("");
 const isShot = ref<boolean>(false);
 const moveRef = ref<HTMLElement | null>(null);
-const currentPoint = reactive<{ top: number; left: number }>({ top: 0, left: 0 });
 
 const previewRect = reactive<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -27,7 +33,6 @@ const rect = reactive<{ width: number; height: number }>({ width: 0, height: 0 }
 const movePoint = reactive<{ x: number; y: number }>({ x: 0, y: 0 });
 const startPoint = reactive<{ x: number; y: number }>({ x: 0, y: 0 });
 const endPoint = reactive<{ x: number; y: number }>({ x: 0, y: 0 });
-const middlePoint = reactive<{ x: number; y: number }>({ x: 0, y: 0 });
 const movePosition = computed(() => {
   return {
     left: movePoint.x + "px",
@@ -38,8 +43,8 @@ const previewRectStyle = computed(() => {
   return {
     width: previewRect.width + "px",
     height: previewRect.height + "px",
-    top: movePoint.y + rect.height / 2 > startPoint.y ? startPoint.y : movePoint.y + rect.height / 2 + "px",
-    left: movePoint.x + rect.width / 2 > startPoint.x ? startPoint.x : movePoint.x + rect.width / 2 + "px",
+    top: (movePoint.y > startPoint.y ? startPoint.y : movePoint.y) + "px",
+    left: (movePoint.x > startPoint.x ? startPoint.x : movePoint.x) + "px",
   };
 });
 
@@ -51,57 +56,72 @@ const getRect = () => {
 const moveMouse = (e: MouseEvent) => {
   const { x, y } = e;
   const { width, height } = getRect();
-  // 减去 icon 半宽半高
-  movePoint.x = x - width / 2;
-  movePoint.y = y - height / 2;
+  // 已通过 css transform -50% 处理
+  movePoint.x = x;
+  movePoint.y = y;
 
-  if (movePoint.x + width / 2 > startPoint.x) {
-    previewRect.width = movePoint.x - startPoint.x + width / 2;
+  if (!isShot.value) {
+    return;
+  }
+
+  if (movePoint.x > startPoint.x) {
+    previewRect.width = movePoint.x - startPoint.x;
   } else {
     endPoint.x = startPoint.x;
-    previewRect.width = endPoint.x - movePoint.x - width / 2;
+    previewRect.width = endPoint.x - movePoint.x;
   }
 
-  if (movePoint.y + height / 2 > startPoint.y) {
-    previewRect.height = movePoint.y - startPoint.y + height / 2;
+  if (movePoint.y > startPoint.y) {
+    previewRect.height = movePoint.y - startPoint.y;
   } else {
     endPoint.y = startPoint.y;
-    previewRect.height = endPoint.y - movePoint.y - height / 2;
+    previewRect.height = endPoint.y - movePoint.y;
   }
 };
+
+// 清空拖拽坐标，记录起始坐标
 const startShot = () => {
   const { width, height } = getRect();
   rect.width = width;
   rect.height = height;
   previewRect.height = 0;
   previewRect.width = 0;
-  middlePoint.x = 0;
-  middlePoint.y = 0;
   endPoint.x = 0;
   endPoint.y = 0;
-  startPoint.x = movePoint.x + width / 2;
-  startPoint.y = movePoint.y + height / 2;
+  startPoint.x = movePoint.x;
+  startPoint.y = movePoint.y;
+  isShot.value = true;
 };
 const endShot = (e: MouseEvent) => {
-  const { x, y } = e;
-  // endPoint.x = x - movePoint.x;
-  // endPoint.y = y - movePoint.y;
-  console.log(previewRect);
-  console.log(startPoint, middlePoint);
+  isShot.value = false;
+  // TODO: canvas
 };
+onBeforeMount(() => {
+  electronAPI.toIpcMain<string>("initPreviewScreen").then((data: string) => {
+    screenImage.value = data;
+  });
+});
 </script>
 
 <style scoped lang="less">
 .page {
   // cursor: none;
   background-color: rgba(245, 245, 245, 0.2);
-  height: 100vh;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  user-select: none;
+  img {
+    filter: invert(20%);
+  }
   .test {
     position: absolute;
     top: 2px;
     right: 0;
   }
   .mouse-point {
+    transform: translate(-50%, -50%);
     color: #333;
     opacity: 1;
     font-size: 30px;
@@ -109,7 +129,7 @@ const endShot = (e: MouseEvent) => {
     top: 0;
     left: 0;
     z-index: 10;
-    background-color: aquamarine;
+    background-color: transparent;
     width: 30px;
     height: 30px;
     line-height: 30px;
@@ -118,8 +138,9 @@ const endShot = (e: MouseEvent) => {
     display: inline-block;
     width: 100px;
     height: 100px;
-    border: 1px dashed #fff;
+    border: 2px dashed #fff;
     position: absolute;
+    filter: brightness(99%);
   }
 }
 </style>

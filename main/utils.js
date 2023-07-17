@@ -1,5 +1,6 @@
-const { app, BrowserWindow, screen, ipcMain, webFrameMain, webContents } = require("electron");
+const { app, BrowserWindow, screen, ipcMain, webFrameMain, webContents, desktopCapturer } = require("electron");
 
+const fs = require("fs");
 const { setLogger } = require("./logger");
 const logger = setLogger("utils");
 
@@ -85,20 +86,46 @@ exports.preventWindowNavigate = (webContents, options) => {
   });
 };
 
-exports.catchScreen = (windowBrowser) => {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+exports.initPreviewScreen = async (webContents) => {
+  // 获取当前窗口
+  const currentWin = BrowserWindow.getAllWindows().find((win) => win.webContents.id === webContents.id);
 
-  // https://www.electronjs.org/docs/latest/api/web-contents#contentscapturepagerect-opts
-  windowBrowser.webContents
-    .capturePage({
-      x: 0,
-      y: 0,
-      width: screenWidth,
-      height: screenHeight,
-    })
-    // https://www.electronjs.org/docs/latest/api/native-image
-    .then((image) => {
-      fs.writeFileSync("./" + Date.now() + ".png", image.toPNG());
-    });
+  // 找到窗口所在屏幕
+  const display = screen.getDisplayNearestPoint(currentWin.getBounds());
+
+  // 获取屏幕内容
+  const { bounds, scaleFactor } = display;
+  const desktopCaputrerSources = await desktopCapturer.getSources({
+    types: ["screen"],
+    thumbnailSize: {
+      width: bounds.width * scaleFactor,
+      height: bounds.height * scaleFactor,
+    },
+  });
+  const desktopCapturerSource = desktopCaputrerSources.find((item) => item.display_id == display.id);
+  const screenImage = desktopCapturerSource.thumbnail.toDataURL();
+  return screenImage;
+};
+
+exports.screenShot = async (webContents, options) => {
+  try {
+    // https://www.electronjs.org/docs/latest/api/web-contents#contentscapturepagerect-opts
+    webContents
+      .capturePage({
+        x: options.x,
+        y: options.y,
+        width: options.width,
+        height: options.height,
+      })
+      // https://www.electronjs.org/docs/latest/api/native-image
+      .then((image) => {
+        console.log(1);
+        fs.writeFileSync("xxx.png", image.toPNG());
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  } catch (error) {
+    console.log(error);
+  }
 };

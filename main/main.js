@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { app, BrowserWindow, screen, ipcMain, webFrameMain, webContents, ipcRenderer } = require("electron");
 
-const { openWindow, preventWindowNavigate } = require("./utils");
+const { openWindow, preventWindowNavigate, initPreviewScreen } = require("./utils");
 const { setLogger } = require("./logger");
 const logger = setLogger("main");
 
@@ -42,6 +42,8 @@ ipcMain.handle("main-listen", async (event, args) => {
       openWindow(_args);
     } else if (channel === "preventWindowNavigate") {
       preventWindowNavigate(sender, _args);
+    } else if (channel === "initPreviewScreen") {
+      return initPreviewScreen(sender, _args);
     }
   } catch (err) {
     logger.error(err.message);

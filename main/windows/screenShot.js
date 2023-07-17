@@ -16,10 +16,12 @@ exports.show = () => {
     // 自定义参数
     ...config.windows.screenShot,
     ...rect,
-    resizable: true,
+    resizable: false,
     autoHideMenuBar: true,
     frame: false,
     transparent: true,
+    fullscreen: true,
+    alwaysOnTop: true,
     webPreferences: {
       devTools: true,
       preload: path.join(__dirname, "../preload.js"),
@@ -28,4 +30,6 @@ exports.show = () => {
       webviewTag: true,
     },
   });
+
+  win.setAlwaysOnTop(true, "screen-saver");
 };
