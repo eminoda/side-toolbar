@@ -13,13 +13,13 @@
       <div class="side-toolbar-icon" ref="sideToobarIconRef">
         <a-popover :getPopupContainer="() => sideToobarIconRef" v-model:visible="visible" trigger="click" placement="right">
           <template #content>
-            <div class="sub-toolbar" @mouseleave="openSubMenus(false)">
+            <div class="sub-toolbar" @mouseleave="openSubMenus(false)" @mouseenter="openSubMenus(true)">
               <scan-outlined class="sub-icon" />
               <expand-outlined class="sub-icon" @click="handleScreenShot" />
               <bg-colors-outlined class="sub-icon" />
             </div>
           </template>
-          <experiment-outlined @mouseenter="openSubMenus(true)" class="icon" />
+          <experiment-outlined @mouseenter="openSubMenus(true)" @mouseleave="openSubMenus(false)" class="icon" />
         </a-popover>
       </div>
       <div class="side-toolbar-icon">
@@ -44,10 +44,10 @@ const menuRef = ref<HTMLElement | null>(null);
 const sideToobarIconRef = ref<HTMLElement | null>(null);
 
 const openSubMenus = (_visible: boolean) => {
+  if (timer.value) {
+    clearTimeout(timer.value);
+  }
   if (!_visible) {
-    if (timer.value) {
-      clearTimeout(timer.value);
-    }
     timer.value = window.setTimeout(() => {
       visible.value = _visible;
     }, 200);

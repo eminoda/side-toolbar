@@ -15,13 +15,14 @@
     <div ref="moveRef" class="mouse-point" :style="movePosition">
       <plus-outlined @mousedown="startShot" @mouseup="endShot" />
     </div>
-    <div class="preview-rect" :style="previewRectStyle"></div>
+    <div class="preview-rect" :style="previewRectStyle" v-if="previewRect.width || previewRect.height"></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, computed, onBeforeMount } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
+import { Modal } from "ant-design-vue";
 
 const screenImage = ref<string>("");
 const isShot = ref<boolean>(false);
@@ -48,14 +49,19 @@ const previewRectStyle = computed(() => {
   };
 });
 
-const getRect = () => {
-  const rect = moveRef.value!.getClientRects()[0];
-  return rect;
+const getRect = (): DOMRect | void => {
+  if (moveRef.value) {
+    const rect = moveRef.value!.getClientRects()[0];
+    return rect;
+  }
 };
 // 监听鼠标移动
 const moveMouse = (e: MouseEvent) => {
   const { x, y } = e;
-  const { width, height } = getRect();
+  const rect = getRect();
+  if (!rect) {
+    return;
+  }
   // 已通过 css transform -50% 处理
   movePoint.x = x;
   movePoint.y = y;
@@ -80,8 +86,18 @@ const moveMouse = (e: MouseEvent) => {
 };
 
 // 清空拖拽坐标，记录起始坐标
-const startShot = () => {
-  const { width, height } = getRect();
+const startShot = (e: MouseEvent) => {
+  if (e.button == 2) {
+    electronAPI.toIpcMain<string>("closeWindow").then(() => {
+      Modal.warning({ content: "取消截屏" });
+    });
+    return;
+  }
+  const rect = getRect();
+  if (!rect) {
+    return;
+  }
+  const { width, height } = rect;
   rect.width = width;
   rect.height = height;
   previewRect.height = 0;

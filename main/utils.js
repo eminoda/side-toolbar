@@ -70,6 +70,12 @@ exports.openWindow = (options = {}) => {
   }
 };
 
+exports.closeWindow = (webContents) => {
+  // 获取当前窗口
+  const currentWin = BrowserWindow.getAllWindows().find((win) => win.webContents.id === webContents.id);
+  currentWin.close();
+};
+
 exports.preventWindowNavigate = (webContents, options) => {
   const win = BrowserWindow.fromWebContents(webContents);
   // foreground-tab, background-tab, new-window or other
@@ -98,10 +104,13 @@ exports.initPreviewScreen = async (webContents) => {
   const desktopCaputrerSources = await desktopCapturer.getSources({
     types: ["screen"],
     thumbnailSize: {
-      width: bounds.width * scaleFactor,
-      height: bounds.height * scaleFactor,
+      width: bounds.width,
+      height: bounds.height,
     },
   });
+
+  console.log(display);
+
   const desktopCapturerSource = desktopCaputrerSources.find((item) => item.display_id == display.id);
   const screenImage = desktopCapturerSource.thumbnail.toDataURL();
   return screenImage;
