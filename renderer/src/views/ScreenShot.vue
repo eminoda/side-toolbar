@@ -11,11 +11,12 @@
     <div class="preview-rect" :style="previewRectStyle"></div>
   </div> -->
   <div class="page" @mousemove="moveMouse">
-    <img :src="screenImage" alt="" />
+    <img :src="screenImage" alt="" ref="imgRef" />
     <div ref="moveRef" class="mouse-point" :style="movePosition">
       <plus-outlined @mousedown="startShot" @mouseup="endShot" />
     </div>
     <div class="preview-rect" :style="previewRectStyle" v-if="previewRect.width || previewRect.height"></div>
+    <canvas id="myCanvas" style="top: 0; left: 0"></canvas>
   </div>
 </template>
 
@@ -27,6 +28,7 @@ import { Modal } from "ant-design-vue";
 const screenImage = ref<string>("");
 const isShot = ref<boolean>(false);
 const moveRef = ref<HTMLElement | null>(null);
+const imgRef = ref<CanvasImageSource | null>(null);
 
 const previewRect = reactive<{ width: number; height: number }>({ width: 0, height: 0 });
 
@@ -111,6 +113,13 @@ const startShot = (e: MouseEvent) => {
 const endShot = (e: MouseEvent) => {
   isShot.value = false;
   // TODO: canvas
+  const canvas = <HTMLCanvasElement>document.getElementById("myCanvas");
+  if (canvas) {
+    const ctx = canvas.getContext("2d");
+    canvas.setAttribute("width", previewRect.width + "px");
+    canvas.setAttribute("height", previewRect.height + "px");
+    ctx!.drawImage(imgRef.value!, movePoint.x > startPoint.x ? startPoint.x : movePoint.x, movePoint.y > startPoint.y ? startPoint.y : movePoint.y, previewRect.width, previewRect.height, 0, 0, previewRect.width, previewRect.height);
+  }
 };
 onBeforeMount(() => {
   electronAPI.toIpcMain<string>("initPreviewScreen").then((data: string) => {
@@ -130,6 +139,9 @@ onBeforeMount(() => {
   user-select: none;
   img {
     filter: invert(20%);
+  }
+  #myCanvas {
+    position: absolute;
   }
   .test {
     position: absolute;

@@ -5,6 +5,7 @@ import Win from '@/views/Win.vue'
 import TabWin from '@/views/TabWin.vue'
 import SubMenus from '@/views/SubMenus.vue'
 import ScreenShot from '@/views/ScreenShot.vue'
+import ScreenShotCanvas from '@/views/ScreenShotCanvas.vue'
 
 const routes = [
     { path: '/', redirect: '/siderBar' },
@@ -14,6 +15,7 @@ const routes = [
     { path: '/tabWin', component: TabWin },
     { path: '/subMenus', component: SubMenus },
     { path: '/screenShot', component: ScreenShot },
+    { path: '/screenShotCanvas', component: ScreenShotCanvas },
 ]
 
 const router = VueRouter.createRouter({

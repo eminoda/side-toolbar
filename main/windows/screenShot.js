@@ -31,5 +31,5 @@ exports.show = () => {
     },
   });
 
-  win.setAlwaysOnTop(true, "screen-saver");
+  // win.setAlwaysOnTop(true, "screen-saver");
 };
