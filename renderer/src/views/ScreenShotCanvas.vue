@@ -1,7 +1,19 @@
 <template>
-  <img id="sourcePic" src="@/assets/images/desk.png" alt="" @load="imageToCanvas" v-show="false" />
-  <canvas id="bgCanvas" ref="bgCanvasRef"></canvas>
-  <canvas id="shotCanvas" ref="shotCanvasRef"></canvas>
+  <div @mousedown="startMouse" @mousemove="moveMouse" @mouseup="stopMouse" :style="{ cursor: cursor }">
+    <div class="point">
+      <div>startPoint: ({{ startPoint.x }},{{ startPoint.y }})</div>
+      <div>movePoint: ({{ movePoint.x }},{{ movePoint.y }})</div>
+      <div>endPoint: ({{ endPoint.x }},{{ endPoint.y }})</div>
+      <div>moveStartPoint: ({{ moveStartPoint.x }},{{ moveStartPoint.y }})</div>
+      <div v-for="(item, index) in points" :key="index">{{ item }}</div>
+    </div>
+    <!-- 图片源 -->
+    <!--  -->
+    <img id="sourcePic" :src="screenImage" @load="imageToCanvas" alt="" v-show="false" />
+    <!-- 剪裁图片 -->
+    <canvas id="shotCanvas" ref="shotCanvasRef"></canvas>
+    <canvas id="resultCanvas" ref="resultCanvasRef"></canvas>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -11,63 +23,263 @@
  * 2. 将 image 转化为 canvas 作为页面背景（窗口置顶）
  * 3.
  */
-import DateBody from "ant-design-vue/lib/vc-picker/panels/DatePanel/DateBody";
-import { reactive, ref, computed, onBeforeMount } from "vue";
+import { reactive, ref, computed, onBeforeMount, unref, Ref } from "vue";
 
-const bgCanvasRef = ref<HTMLCanvasElement | null>(null);
 const shotCanvasRef = ref<HTMLCanvasElement | null>(null);
-const imageToCanvas = () => {
+const resultCanvasRef = ref<HTMLCanvasElement | null>(null);
+
+const startPoint = reactive({
+  x: 0,
+  y: 0,
+});
+const moveStartPoint = reactive({
+  x: 0,
+  y: 0,
+});
+const endPoint = reactive({
+  x: 0,
+  y: 0,
+});
+const movePoint = reactive({
+  x: 0,
+  y: 0,
+});
+
+const isMouseDown = ref(false);
+const isMoving = ref(false);
+
+// 判断鼠标是否在裁剪图之内
+const inMove = computed(() => {
+  // 左上到右下↘，右上到左下↙，右下到左上↖，左下到右上↗
+  if (
+    (movePoint.x > startPoint.x && movePoint.x < endPoint.x && movePoint.y > startPoint.y && movePoint.y < endPoint.y) ||
+    (movePoint.x < startPoint.x && movePoint.x > endPoint.x && movePoint.y > startPoint.y && movePoint.y < endPoint.y) ||
+    (movePoint.x < startPoint.x && movePoint.x > endPoint.x && movePoint.y < startPoint.y && movePoint.y > endPoint.y) ||
+    (movePoint.x > startPoint.x && movePoint.x < endPoint.x && movePoint.y < startPoint.y && movePoint.y > endPoint.y)
+  ) {
+    return true;
+  }
+
+  return false;
+});
+
+const points = computed(() => {
+  return [
+    [endPoint.x > startPoint.x ? startPoint.x : endPoint.x, endPoint.y > startPoint.y ? startPoint.y : endPoint.y],
+    [endPoint.x > startPoint.x ? endPoint.x : startPoint.x, endPoint.y > startPoint.y ? startPoint.y : endPoint.y],
+    [endPoint.x > startPoint.x ? endPoint.x : startPoint.x, endPoint.y > startPoint.y ? endPoint.y : startPoint.y],
+    [endPoint.x > startPoint.x ? startPoint.x : endPoint.x, endPoint.y > startPoint.y ? endPoint.y : startPoint.y],
+  ];
+});
+const direction = ref("");
+const cursor = computed(() => {
+  if (inMove.value) {
+    return "move";
+  } else if (isMouseDown.value) {
+    return "crosshair";
+  }
+  for (let i = 0; i < points.value.length; i++) {
+    const [x, y] = points.value[i];
+    if ((i == 0 || i == 2) && Math.abs(movePoint.x - x) < 5 && Math.abs(movePoint.y - y) < 5) {
+      return "se-resize";
+    } else if ((i == 1 || i == 3) && Math.abs(movePoint.x - x) < 5 && Math.abs(movePoint.y - y) < 5) {
+      return "sw-resize";
+    }
+  }
+  return "default";
+});
+
+const getPicRect = () => {
   const sourcePic = <HTMLImageElement>document.querySelector("#sourcePic");
-  if (bgCanvasRef.value) {
-    // bgCanvasRef.value.width = sourcePic.width;
-    // bgCanvasRef.value.height = sourcePic.height;
-    // const context = bgCanvasRef.value.getContext("2d");
-    // if (context) {
-    //   context.drawImage(sourcePic, 0, 0, sourcePic.width, sourcePic.height);
-    //   // context.save()
-    //   // context.globalCompositeOperation = "source-atop";
-    // }
-    if (shotCanvasRef.value) {
-      shotCanvasRef.value.width = sourcePic.width;
-      shotCanvasRef.value.height = sourcePic.height;
-      const context2 = shotCanvasRef.value.getContext("2d");
-      if (context2) {
-        context2.clearRect(0, 0, sourcePic.width, sourcePic.height);
-        context2.save();
-        // 遮罩层
-        context2.fillStyle = "rgba(0,0,0,0.5)";
-        context2.fillRect(0, 0, sourcePic.width, sourcePic.height);
-        // context2.globalCompositeOperation = "source-atop";
+  return {
+    width: sourcePic.width,
+    height: sourcePic.height,
+    imgSource: sourcePic,
+  };
+};
 
-        // 挖孔，绘制镂空
-        context2.clearRect(100, 100, 150, 150);
-        // context2.globalCompositeOperation = "source-over";
-        // 绘制移动坐标
-        context2.fillStyle = "#2CABFF";
-        context2.fillRect(100 - 5, 100 - 5, 10, 10);
+const screenImage = ref<string>("");
 
-        // context2.restore();
-        // context2.save();
-        context2.globalCompositeOperation = "destination-over"; //在源图像上显示目标图像。将背景图至于底部
-        context2.drawImage(sourcePic, 0, 0, sourcePic.width, sourcePic.height);
-        // context2.restore();
+// 图片加载完后，初始化剪裁画布
+const imageToCanvas = () => {
+  if (shotCanvasRef.value) {
+    const { width, height } = getPicRect();
+    shotCanvasRef.value.width = width;
+    shotCanvasRef.value.height = height;
 
-        const img = context2.getImageData(100, 100, 150, 150);
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = 150;
-        tempCanvas.height = 150;
-        const tempContext = tempCanvas!.getContext("2d");
-        tempContext?.putImageData(img, 0, 0);
-        const a = document.createElement("a");
-        // 获取图片
-        a.href = tempCanvas.toDataURL("png");
-        // 下载图片
-        a.download = `${new Date().getTime()}.png`;
-        a.click();
+    if (resultCanvasRef.value) {
+      resultCanvasRef.value.width = width;
+      resultCanvasRef.value.height = height;
+      const resultContext = resultCanvasRef.value.getContext("2d");
+      if (resultContext) {
+        drawImage(resultContext);
+      }
+    }
+    const shotContext = shotCanvasRef.value.getContext("2d");
+    if (shotContext) {
+      drawMask(shotContext);
+      drawImage(shotContext);
+      shotContext.save();
+    }
+  }
+};
+
+// 绘制遮罩层
+const drawMask = (context: CanvasRenderingContext2D) => {
+  const { width, height } = getPicRect();
+  context.clearRect(0, 0, width, height);
+  // context.save();
+  context.fillStyle = "rgba(0,0,0,0.5)";
+  context.fillRect(0, 0, width, height);
+  // context.restore();
+};
+
+// 绘制背景图
+const drawImage = (context: CanvasRenderingContext2D) => {
+  const { width, height, imgSource } = getPicRect();
+  context.globalCompositeOperation = "destination-over"; //在源图像上显示目标图像。将背景图至于底部
+  context.drawImage(imgSource, 0, 0, width, height);
+};
+
+const drawPoint = (context: CanvasRenderingContext2D, dx: number = 0, dy: number = 0) => {
+  // 绘制坐标
+  context.globalCompositeOperation = "source-over";
+  context.fillStyle = "#2CABFF";
+  // top-left
+  context.fillRect(startPoint.x - 5 + dx, startPoint.y - 5 + dy, 10, 10);
+  // top-right
+  context.fillRect(endPoint.x - 5 + dx, startPoint.y - 5 + dy, 10, 10);
+  // bottom-left
+  context.fillRect(startPoint.x - 5 + dx, endPoint.y - 5 + dy, 10, 10);
+  // bottom-right
+  context.fillRect(endPoint.x - 5 + dx, endPoint.y - 5 + dy, 10, 10);
+};
+const startMouse = (e: MouseEvent) => {
+  if (inMove.value) {
+    isMoving.value = true;
+    moveStartPoint.x = e.x;
+    moveStartPoint.y = e.y;
+  } else {
+    isMouseDown.value = true;
+    for (let i = 0; i < points.value.length; i++) {
+      const [x, y] = points.value[i];
+      if (Math.abs(e.x - x) <= 5 && Math.abs(e.y - y) <= 5) {
+        if (i == 0) {
+          direction.value = "top-left";
+          return;
+        } else if (i == 1) {
+          direction.value = "top-right";
+          return;
+        } else if (i == 2) {
+          direction.value = "bottom-right";
+          return;
+        } else if (i == 3) {
+          direction.value = "bottom-left";
+          return;
+        }
+      }
+    }
+    direction.value = "";
+    startPoint.x = e.x;
+    startPoint.y = e.y;
+  }
+};
+
+const moveMouse = (e: MouseEvent) => {
+  if (shotCanvasRef.value) {
+    const shotContext = shotCanvasRef.value.getContext("2d");
+    if (shotContext) {
+      // 移动切图层
+      if (isMoving.value) {
+        drawMask(shotContext);
+        const dx = e.x - moveStartPoint.x;
+        const dy = e.y - moveStartPoint.y;
+        console.log(dx, dy);
+
+        shotContext.clearRect(startPoint.x + dx, startPoint.y + dy, endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+        drawPoint(shotContext, dx, dy);
+        drawImage(shotContext);
+      } // 鼠标点击后才开始绘制
+      else if (isMouseDown.value) {
+        // 绘制遮罩层
+        drawMask(shotContext);
+        // 如果更改镂空矩形大小，重新定义起末坐标
+        if (direction.value) {
+          if (direction.value === "top-left") {
+            startPoint.x = e.x;
+            startPoint.y = e.y;
+            endPoint.x = points.value[2][0];
+            endPoint.y = points.value[2][1];
+          } else if (direction.value === "top-right") {
+            startPoint.x = points.value[3][0];
+            startPoint.y = points.value[3][1];
+            endPoint.x = e.x;
+            endPoint.y = e.y;
+          } else if (direction.value === "bottom-left") {
+            endPoint.x = points.value[1][0];
+            endPoint.y = points.value[1][1];
+            startPoint.x = e.x;
+            startPoint.y = e.y;
+          } else if (direction.value === "bottom-right") {
+            startPoint.x = points.value[0][0];
+            startPoint.y = points.value[0][1];
+            endPoint.x = e.x;
+            endPoint.y = e.y;
+          }
+        } else {
+          endPoint.x = e.x;
+          endPoint.y = e.y;
+        }
+        // 绘制镂空
+        shotContext.clearRect(startPoint.x, startPoint.y, endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+        drawPoint(shotContext);
+        drawImage(shotContext);
+      }
+      // 绘制鼠标
+      else {
+        movePoint.x = e.x;
+        movePoint.y = e.y;
       }
     }
   }
 };
+
+const stopMouse = (e: MouseEvent) => {
+  isMouseDown.value = false;
+  if (isMoving.value) {
+    const dx = e.x - moveStartPoint.x;
+    const dy = e.y - moveStartPoint.y;
+    startPoint.x = points.value[0][0] + dx;
+    startPoint.y = points.value[0][1] + dy;
+    endPoint.x = points.value[2][0] + dx;
+    endPoint.y = points.value[2][1] + dy;
+    moveStartPoint.x = 0;
+    moveStartPoint.y = 0;
+    isMoving.value = false;
+
+    // 下载图片
+    const resultContext = resultCanvasRef.value!.getContext("2d");
+    const img = resultContext!.getImageData(startPoint.x, startPoint.y, endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = endPoint.x - startPoint.x;
+    tempCanvas.height = endPoint.y - startPoint.y;
+    const tempContext = tempCanvas!.getContext("2d");
+    tempContext?.putImageData(img, 0, 0);
+    const a = document.createElement("a");
+    // 获取图片
+    a.href = tempCanvas.toDataURL("png");
+    // 下载图片
+    a.download = `${new Date().getTime()}.png`;
+    a.click();
+  }
+};
+
+onBeforeMount(() => {
+  electronAPI.toIpcMain<string>("initPreviewScreen").then((data: string) => {
+    screenImage.value = data;
+  });
+});
+
 </script>
 
 <style scoped lang="less">
@@ -77,5 +289,12 @@ const imageToCanvas = () => {
   left: 0;
   //   width: 100%;
   //   height: 100%;
+}
+.point {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  z-index: 999;
+  color: #fff;
 }
 </style>
