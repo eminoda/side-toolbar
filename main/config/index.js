@@ -17,6 +17,6 @@ exports.windows = {
     url: "http://localhost:5173/screenShot",
     title: "截屏",
     name: "screenShot",
-    isDebugger: true,
+    isDebugger: false,
   },
 };

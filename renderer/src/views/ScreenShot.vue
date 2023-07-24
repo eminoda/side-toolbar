@@ -11,7 +11,7 @@
     <!-- 生成画布 -->
     <canvas id="resultCanvas" ref="resultCanvasRef" v-show="false"></canvas>
     <div class="panel" :style="panelPosition" v-if="showPanel">
-      <download-outlined @click="downPic" />
+      <download-outlined @click="downPic(false)" />
       <check-outlined :style="{ color: '#389e0d' }" @click="downPic(true)" />
       <close-outlined :style="{ color: '#cf1322' }" @click="cancelWindow" />
     </div>
@@ -307,16 +307,18 @@ const downPic = (isClipboard: boolean) => {
       }
     });
   } else {
+    electronAPI.toIpcMain("savePic", { blob: tempCanvas.toDataURL("png") });
     const a = document.createElement("a");
     // 获取图片
     a.href = tempCanvas.toDataURL("png");
     // 下载图片
-    a.download = `${new Date().getTime()}.png`;
-    a.click();
+    // a.download = `${new Date().getTime()}.png`;
+    // a.click();
   }
 };
 
 const cancelWindow = () => {
+  electronAPI.toIpcMain("openWindow", { name: "siderBar" });
   electronAPI.toIpcMain("closeWindow");
 };
 
@@ -327,8 +329,10 @@ const keyEscDown = (e: KeyboardEvent) => {
 };
 
 onBeforeMount(() => {
-  electronAPI.toIpcMain<string>("initPreviewScreen").then((data: string) => {
-    screenImage.value = data;
+  electronAPI.toIpcMain<string>("hideExcludeWFocusedindow").then(() => {
+    electronAPI.toIpcMain<string>("initPreviewScreen").then((data: string) => {
+      screenImage.value = data;
+    });
   });
 });
 

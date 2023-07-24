@@ -22,6 +22,7 @@ exports.show = () => {
     transparent: true,
     fullscreen: true,
     alwaysOnTop: true,
+    // skipTaskbar: true,
     webPreferences: {
       devTools: true,
       preload: path.join(__dirname, "../preload.js"),
@@ -31,5 +32,5 @@ exports.show = () => {
     },
   });
 
-  win.setAlwaysOnTop(true, "screen-saver");
+  // win.setAlwaysOnTop(true, "screen-saver");
 };

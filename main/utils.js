@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain, webFrameMain, webContents, desktopCapturer } = require("electron");
+const { app, dialog, BrowserWindow, screen, ipcMain, webFrameMain, webContents, desktopCapturer } = require("electron");
 
 const fs = require("fs");
 const { setLogger } = require("./logger");
@@ -60,7 +60,7 @@ exports.openWindow = (options = {}) => {
   try {
     if (!options.name) {
       throw new Error();
-    } else if (["search", "screenShot"].includes(options.name)) {
+    } else if (["search", "screenShot", "siderBar"].includes(options.name)) {
       return require(`./windows/${options.name}`).show();
     } else {
       throw new Error(`窗口 ${options.name} 未定义`);
@@ -74,6 +74,34 @@ exports.closeWindow = (webContents) => {
   // 获取当前窗口
   const currentWin = BrowserWindow.getAllWindows().find((win) => win.webContents.id === webContents.id);
   currentWin.close();
+};
+
+exports.hideExcludeWFocusedindow = () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const allWins = BrowserWindow.getAllWindows();
+  allWins.forEach((win) => {
+    if (focusedWindow.id !== win.id) {
+      console.log(1);
+      win.hide();
+    }
+  });
+};
+
+exports.savePic = (webContents, { blob }) => {
+  try {
+    BrowserWindow.getFocusedWindow().setAlwaysOnTop(false);
+    const filename = dialog.showSaveDialogSync(webContents, {
+      title: "保存图片",
+      filters: [{ name: "All Files", extensions: ["png"] }],
+    });
+    if (filename) {
+      fs.writeFileSync(filename, blob.split("base64,").pop(), { encoding: "base64" });
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    BrowserWindow.getFocusedWindow().setAlwaysOnTop(true);
+  }
 };
 
 exports.preventWindowNavigate = (webContents, options) => {
