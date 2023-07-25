@@ -19,4 +19,10 @@ exports.windows = {
     name: "screenShot",
     isDebugger: false,
   },
+  screenColor: {
+    url: "http://localhost:5173/screenColor",
+    title: "截屏",
+    name: "screenShot",
+    isDebugger: false,
+  },
 };

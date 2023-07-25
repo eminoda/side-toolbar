@@ -15,8 +15,8 @@
           <template #content>
             <div class="sub-toolbar" @mouseleave="openSubMenus(false)" @mouseenter="openSubMenus(true)">
               <scan-outlined class="sub-icon" />
-              <expand-outlined class="sub-icon" @click="handleScreenShot" />
-              <bg-colors-outlined class="sub-icon" />
+              <expand-outlined class="sub-icon" @click="openWindow('screenShot')" />
+              <bg-colors-outlined class="sub-icon" @click="openWindow('screenColor')" />
             </div>
           </template>
           <experiment-outlined @mouseenter="openSubMenus(true)" @mouseleave="openSubMenus(false)" class="icon" />
@@ -58,8 +58,8 @@ const openSubMenus = (_visible: boolean) => {
   // const { left, width, height, top } = menuRef.value?.getBoundingClientRect()!;
   // electronAPI.toIpcMain("win:open", { name: "subMenusWin", type, position: { x: left * 2 + width, y: top + height / 2 } });
 };
-const handleScreenShot = () => {
-  electronAPI.toIpcMain("openWindow", { name: "screenShot" });
+const openWindow = (name: string) => {
+  electronAPI.toIpcMain("openWindow", { name });
 };
 const openBrowser = () => {
   try {

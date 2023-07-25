@@ -60,7 +60,7 @@ exports.openWindow = (options = {}) => {
   try {
     if (!options.name) {
       throw new Error();
-    } else if (["search", "screenShot", "siderBar"].includes(options.name)) {
+    } else if (["search", "screenShot", "siderBar", "screenColor"].includes(options.name)) {
       return require(`./windows/${options.name}`).show();
     } else {
       throw new Error(`窗口 ${options.name} 未定义`);
