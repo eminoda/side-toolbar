@@ -10,7 +10,12 @@
     <canvas id="shotCanvas" ref="shotCanvasRef" @mousemove="moveMouse"></canvas>
     <div class="panel" :style="panelPosition">
       <div v-for="(item, index) in panelColorArr" :key="index" class="line">
-        <span v-for="(pc, _index) in item" :key="_index" :style="{ background: `rgba(${pc.color})`, border: `${pc.axis[0] == pc.axis[1] && pc.axis[1] == Math.floor(panelColorArr.length / 2) ? '1px solid #333' : ''}` }"></span>
+        <!--  -->
+        <span v-for="(pc, _index) in item" :key="_index" :class="{ hover: pc.axis[0] == pc.axis[1] && pc.axis[1] == Math.floor(panelColorArr.length / 2) }" :style="{ background: `rgba(${pc.color})` }"></span>
+      </div>
+      <div class="result">
+        <div>rgb ({{ currentColor.slice(0, 3).join(",") }})</div>
+        <div>hex #{{ currentHex.join("") }}</div>
       </div>
     </div>
   </div>
@@ -34,7 +39,7 @@ const movePoint = reactive({
 });
 
 const screenImage = ref<string>("");
-const SIDER_COUNT = ref<number>(21);
+const SIDER_COUNT = ref<number>(19);
 
 interface PanelColor {
   point: number[];
@@ -58,7 +63,32 @@ const panelPosition = computed(() => {
     left: movePoint.x + 10 + "px",
   };
 });
+const currentColor = computed(() => {
+  let color: number[] = [];
+  panelColorArr.value.find((item: PanelColor[]) => {
+    return item.find((_item: PanelColor) => {
+      if (_item.point[0] == movePoint.x && _item.point[1] == movePoint.y) {
+        color = _item.color;
+        return true;
+      }
+      return false;
+    });
+  });
 
+  return color;
+});
+const currentHex = computed(() => {
+  const toHex = (n: number) => {
+    return `${n > 15 ? "" : 0}${n.toString(16)}`.toUpperCase();
+  };
+  const hex: string[] = [];
+  currentColor.value.forEach((item: number, index: number) => {
+    if (index < 3) {
+      hex.push(toHex(item));
+    }
+  });
+  return hex;
+});
 const getPicRect = () => {
   const sourcePic = <HTMLImageElement>document.querySelector("#sourcePic");
   if (!sourcePic) {
@@ -117,7 +147,6 @@ const drawColorPanel = (shotContext: CanvasRenderingContext2D, x: number, y: num
       index++;
     }
   }
-  console.log(panelColors);
 };
 
 // 3. 监听鼠标移动坐标
@@ -163,18 +192,24 @@ const moveMouse = (e: MouseEvent) => {
   .panel {
     position: absolute;
     z-index: 50;
-    background-color: #f0f5ff;
+    background-color: rgba(77, 80, 88, 0.6);
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 6px;
     .line {
       display: flex;
       justify-content: flex-start;
       span {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         display: inline-block;
         margin-right: 2px;
         margin-bottom: 2px;
+        &.hover {
+          width: 8px;
+          height: 8px;
+          box-shadow: 1px 1px 1px #babbc0, 1px -1px 1px #babbc0, -1px -1px 1px #babbc0, -1px 1px 1px #babbc0;
+          // filter: contrast(200%);
+        }
       }
     }
   }
